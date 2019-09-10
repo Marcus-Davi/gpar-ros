@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 
 
    //Copy OK to SendData package
-   std::string AckStr("OK");
+   std::string AckStr("COMANDO RECEBIDO COM SUCESSO!");
    mobile_data_send.request.data.resize(AckStr.size());
    memcpy(&mobile_data_send.request.data[0],AckStr.c_str(),AckStr.size());
 
