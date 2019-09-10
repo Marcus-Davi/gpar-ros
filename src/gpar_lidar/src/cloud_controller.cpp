@@ -67,6 +67,7 @@ PointCloudT::Ptr cloud_lower_ = boost::make_shared<PointCloudT>();
 
 void savePoints(PointCloudT::Ptr pc){
  ros::Time time = ros::Time::now();
+
  std::time_t std_time;
  std_time = time.sec;
  char* time_date = std::ctime(&std_time);
@@ -74,7 +75,8 @@ void savePoints(PointCloudT::Ptr pc){
  ResolveDir(); //cria ou verifica existencia do diretorio
 char* home_path = getenv("HOME");
 std::string str_path = std::string(home_path) + "/Pontos/pontos_";
-std::string str_time = std::string(time_date);
+//std::string str_time = std::string(time_date);
+std::string str_time = std::to_string(time.sec);
 std::string str = str_path + str_time + ".txt";
 std::string str_pcd = str_path + str_time + ".pcd";
 
