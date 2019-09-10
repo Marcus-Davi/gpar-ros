@@ -1,4 +1,4 @@
-# drone-ros git repository v4
+# GPAR-OSDK ROS #
 
 Repositorio contendo as ultimas atualizações de código da integração ROS-OSDK pro projeto EDP.
 
