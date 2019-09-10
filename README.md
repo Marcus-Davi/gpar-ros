@@ -11,3 +11,10 @@ Contato: davi2812@dee.ufc.br
 laptop
 
 
+repos: 
+tinker2
+laptop
+github
+	
+
+
