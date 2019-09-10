@@ -8,13 +8,7 @@ Os arquivos aqui contidos são pacotes ROS fornecidos pela DJI ou pela comunidad
 
 Contato: davi2812@dee.ufc.br
 
-laptop
-laptop 2
-
-repos: 
-tinker2
-laptop
-github
+Adicionado via Branch 
 	
 
 
