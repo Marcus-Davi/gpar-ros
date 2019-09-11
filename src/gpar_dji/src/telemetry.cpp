@@ -130,8 +130,8 @@ if(InitFlag == false){
 	} else {
 //	origin_gps = current_gps;
 	//podemos fixar as coordenadas aqui!
-	origin_gps.latitude = -3.582767;
-  	origin_gps.longitude = -38.876725;
+	origin_gps.latitude = -3.584132; //coordenadas centrais das pilhas
+  	origin_gps.longitude = -38.879044; //coordenadas centrais das pilhas
 
 	ROS_INFO("FIRST COORDINATE MEMORIZED !");
 	InitFlag = true;
