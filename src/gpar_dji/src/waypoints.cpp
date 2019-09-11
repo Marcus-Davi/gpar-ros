@@ -291,7 +291,7 @@ ServiceAck obtainCtrlAuthority()
 ServiceAck releaseCtrlAuthority()
 {
   dji_sdk::SDKControlAuthority sdkAuthority;
-  sdkAuthority.request.control_enable = 1;
+  sdkAuthority.request.control_enable = 0;
   sdk_ctrl_authority_service.call(sdkAuthority);
   if (!sdkAuthority.response.result)
   {
