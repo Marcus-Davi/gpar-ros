@@ -127,11 +127,6 @@ int main(int argc, char** argv)
 
   mobile_comm_sub  = nh.subscribe("dji_sdk/from_mobile_data", 10, &mobile_comm_callback);
 
-   //Copy OK to SendData package
-   std::string AckStr("OK");
-   mobile_data_send.request.data.resize(AckStr.size());
-   memcpy(&mobile_data_send.request.data[0],AckStr.c_str(),AckStr.size());
-
   ros::Rate r(10);
   while(ros::ok()){
   
