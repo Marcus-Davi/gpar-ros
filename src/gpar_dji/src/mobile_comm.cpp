@@ -15,9 +15,11 @@
 
 
 dji_sdk::MobileData mobile_data;
-dji_sdk::SendMobileData mobile_data_send;
-ros::ServiceClient client;
 ros::ServiceClient mobile_data_service;
+ros::ServiceClient client;
+
+bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service);
+
 
 
 void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data) // ~100Hz
@@ -35,21 +37,25 @@ void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data)
   switch(buffer[0]){
   case 'T': //sTop
   srv.request.command = 0;
+  MobileSendText("Stop Recebido",mobile_data_service);
   valid = true;
   break;
 
   case 'I': //Init
   srv.request.command = 1;
+  MobileSendText("Init Recebido",mobile_data_service);
   valid = true;
   break;
 
   case 'R': //Restart
   srv.request.command = 2;
+  MobileSendText("Restart Recebido",mobile_data_service);
   valid = true;
   break;
 
   case 'S': //Save
   srv.request.command = 3;
+  MobileSendText("Save Recebido",mobile_data_service);
   valid = true;
   break;
 
@@ -60,11 +66,9 @@ void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data)
 
  if(valid){ //Comando valido ?
   if(client.call(srv)){ //Chama o serviço do cloud_controller
-    if (mobile_data_service.call(mobile_data_send) ) //Envio OK ?
-     ROS_INFO("Cmd recebido, OK enviado"); 
   } 
   else
-  ROS_INFO("srv call bad");
+  ROS_WARN("srv call bad");
 }
 
 
@@ -86,16 +90,21 @@ int main(int argc, char** argv)
    client = nh.serviceClient<gpar_lidar::Command>("cloud_controller/command_parser");
 
 
-   //Copy OK to SendData package
-   std::string AckStr("COMANDO RECEBIDO COM SUCESSO!");
-   mobile_data_send.request.data.resize(AckStr.size());
-   memcpy(&mobile_data_send.request.data[0],AckStr.c_str(),AckStr.size());
-
-
-
-
   ros::spin(); //Chama os callbacks
   return 0;
+}
+
+
+
+bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service){
+	static dji_sdk::SendMobileData mobile_data_send;
+
+	std::string str_text(text);
+	mobile_data_send.request.data.resize(str_text.size());
+	memcpy(&mobile_data_send.request.data[0],str_text.c_str(),str_text.size());
+
+	return mobile_data_service.call(mobile_data_send);
+
 }
 
 
