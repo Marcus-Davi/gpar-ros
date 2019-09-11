@@ -45,6 +45,7 @@ void setWaypointInitDefaults(dji_sdk::MissionWaypointTask& waypointTask);
 ServiceAck takeoff();
 ServiceAck land();
 ServiceAck obtainCtrlAuthority();
+ServiceAck releaseCtrlAuthority();
 ServiceAck initWaypointMission(dji_sdk::MissionWaypointTask& waypointTask);
 ServiceAck missionAction(DJI::OSDK::DJI_MISSION_TYPE type, DJI::OSDK::MISSION_ACTION   action);
 bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service);

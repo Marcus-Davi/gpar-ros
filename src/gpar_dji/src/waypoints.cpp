@@ -141,6 +141,7 @@ int main(int argc, char** argv)
 
   if(!startMission)
    continue;
+
    ServiceAck ack = obtainCtrlAuthority(); //DEBUG
 
 
@@ -158,7 +159,10 @@ int main(int argc, char** argv)
     }
     else
     {
-      ROS_WARN("Failed Obtain SDK control Authority");
+
+      ROS_WARN("Failed Obtain SDK control Authority. Releasing. Try again!");
+      releaseCtrlAuthority();
+
       startMission=false;
       continue;
 
@@ -269,6 +273,22 @@ void setWaypointInitDefaults(dji_sdk::MissionWaypointTask& waypointTask)
 
 
 ServiceAck obtainCtrlAuthority()
+{
+  dji_sdk::SDKControlAuthority sdkAuthority;
+  sdkAuthority.request.control_enable = 1;
+  sdk_ctrl_authority_service.call(sdkAuthority);
+  if (!sdkAuthority.response.result)
+  {
+    ROS_WARN("ack.info: set = %i id = %i", sdkAuthority.response.cmd_set,
+             sdkAuthority.response.cmd_id);
+    ROS_WARN("ack.data: %i", sdkAuthority.response.ack_data);
+  }
+  return ServiceAck(sdkAuthority.response.result, sdkAuthority.response.cmd_set,
+                    sdkAuthority.response.cmd_id,
+                    sdkAuthority.response.ack_data);
+}
+
+ServiceAck releaseCtrlAuthority()
 {
   dji_sdk::SDKControlAuthority sdkAuthority;
   sdkAuthority.request.control_enable = 1;
