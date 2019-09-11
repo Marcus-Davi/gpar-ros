@@ -49,6 +49,7 @@ void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data)
     srv.request.speed = idle_vel;
     if(waypoint_setspeed_service.call(srv))
     ROS_INFO("cruising speed = %f",idle_vel);
+    MobileSendText("Velocidade Setada com sucesso",mobile_data_service);
     valid = true;
     }
     else if(buffer[0]=='W') //WAYPOINT!
@@ -59,6 +60,7 @@ void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data)
    switch(buffer[2]){
    case '0': //W=0
    valid = true;
+   MobileSendText("Missao Campo Carregada",mobile_data_service);
    startMission = true;
    str_waypointfilename = "campo.wpt";
    str_waypointfile = str_waypointpath + str_waypointfilename;
@@ -66,6 +68,7 @@ void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data)
 
    case '1': //W=1
    valid = true;
+   MobileSendText("Missao Campo Pilha 1",mobile_data_service);
    str_waypointfilename = "pilha1.wpt";
    startMission = true;
    str_waypointfile = str_waypointpath + str_waypointfilename;
@@ -73,6 +76,7 @@ void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data)
 
    case '2': //W=2
    valid = true;
+   MobileSendText("Missao Campo Pilha 2",mobile_data_service);
    str_waypointfilename = "pilha2.wpt";
    startMission = true;
    str_waypointfile = str_waypointpath + str_waypointfilename;
@@ -80,6 +84,7 @@ void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data)
 
    case '3': //W=3
    valid = true;
+   MobileSendText("Missao Campo Pilha 3",mobile_data_service);
    str_waypointfilename = "pilha3.wpt";
    startMission = true;
    str_waypointfile = str_waypointpath + str_waypointfilename;
@@ -316,6 +321,19 @@ ServiceAck missionAction(DJI::OSDK::DJI_MISSION_TYPE type, DJI::OSDK::MISSION_AC
                missionWpAction.response.ack_data };
   }
 }
+
+
+bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service){
+	static dji_sdk::SendMobileData mobile_data_send;
+
+	std::string str_text(text);
+	mobile_data_send.request.data.resize(str_text.size());
+	memcpy(&mobile_data_send.request.data[0],str_text.c_str(),str_text.size());
+
+	return mobile_data_service.call(mobile_data_send);
+
+}
+
 
 
 

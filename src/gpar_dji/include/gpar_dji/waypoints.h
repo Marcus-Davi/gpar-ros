@@ -47,7 +47,7 @@ ServiceAck land();
 ServiceAck obtainCtrlAuthority();
 ServiceAck initWaypointMission(dji_sdk::MissionWaypointTask& waypointTask);
 ServiceAck missionAction(DJI::OSDK::DJI_MISSION_TYPE type, DJI::OSDK::MISSION_ACTION   action);
-
+bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service);
 
 #define C_EARTH (double)6378137.0
 #define C_PI (double)3.141592653589793
