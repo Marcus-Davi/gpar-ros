@@ -32,6 +32,8 @@ Pacotes **ROS** do repositório:
     - Biblioteca Core baixo nível para comunicação com LIDAR SICK LD-MRS.
     
     OBS: Todos estes pacotes requerem as bibliotecas ros-full, compiladas via codigo fonte ou instaladas diretamente.
+    
+    Em DESENVOLVIMENTO.
 
 
 
