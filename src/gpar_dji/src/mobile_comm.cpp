@@ -16,7 +16,7 @@
 
 dji_sdk::MobileData mobile_data;
 ros::ServiceClient mobile_data_service;
-ros::ServiceClient client;
+ros::ServiceClient cloud_controller_service;
 
 bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service);
 
@@ -65,16 +65,12 @@ void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data)
   } //switch end
 
  if(valid){ //Comando valido ?
-  if(client.call(srv)){ //Chama o serviço do cloud_controller
+  if(cloud_controller_service.call(srv)){ //Chama o serviço do cloud_controller
   } 
   else
   ROS_WARN("srv call bad");
 }
 
-
-  
-
-  
 
 }
 
@@ -87,13 +83,12 @@ int main(int argc, char** argv)
 
    ros::Subscriber mobile_comm_sub = nh.subscribe("dji_sdk/from_mobile_data", 10, &mobile_comm_callback);
    mobile_data_service = nh.serviceClient<dji_sdk::SendMobileData>("dji_sdk/send_data_to_mobile");
-   client = nh.serviceClient<gpar_lidar::Command>("cloud_controller/command_parser");
+   cloud_controller_service = nh.serviceClient<gpar_lidar::Command>("cloud_controller/command_parser");
 
 
   ros::spin(); //Chama os callbacks
   return 0;
 }
-
 
 
 bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service){
