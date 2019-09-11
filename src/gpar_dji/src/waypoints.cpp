@@ -30,7 +30,7 @@ float idle_vel = 8;
 std::string str_waypointfile;
 
 
-
+//test
 
 void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data){
   static char buffer[100];
