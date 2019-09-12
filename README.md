@@ -4,7 +4,6 @@ Repositorio contendo as ultimas atualizações de código da integração ROS-OS
 
 Os arquivos aqui contidos são pacotes ROS fornecidos pela DJI ou pela comunidade ROS. Pacotes com nome "gpar-*" foram desenvolvidos pelo laboratório.
 
-# TESTE 
 
 Contato: davi2812@dee.ufc.br
 
