@@ -20,10 +20,12 @@
 #include <std_msgs/UInt8.h>
 
 // 1m ~ 0.000001 graus !
-#define EPSILON 0.000037f //10m
+#define EPSILON 0.000038f //10m
 
 bool CompareCoordinates(double a, double b);
 bool HasReachedWaypoint(const sensor_msgs::NavSatFix& CurrentGPS, const dji_sdk::MissionWaypoint& Waypoint);
+
+bool isLogging = false;
 
 
 ros::ServiceClient waypointInfo;
@@ -67,6 +69,11 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 		status_pub.publish(pub_msg);
 	return;
 	}
+
+	if(isLogging == false){
+		system("rosrun rosbag record -o /home/linaro/Logs/drone_scan /cloud_ldmrs /tf /tf_static __name:=flight_bag &");
+		isLogging = true;
+	}
 	//Aqui ja tem waypoints!
 
 
@@ -83,7 +90,6 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 	if(Waypoints_Index == 1) { //primeiro waypoint!
 		if(State != WayPointState::First){
 			cloud_srv.request.command = 1; //Start Scan
-			system("rosrun rosbag record -o /home/linaro/Logs/drone_scan /cloud_ldmrs /tf /tf_static __name:=flight_bag &");
 			if(!cloudController.call(cloud_srv))
 		         ROS_ERROR("Falha ao chamar cloudcontroller service");
 			else
