@@ -12,6 +12,9 @@
 #include "gpar_dji/telemetry.h"
 #include <fstream>
 
+// TO DO : IMPLEMENTAR TRASNFORMACOES UTM
+//
+//
 const float deg2rad = C_PI/180.0;
 const float rad2deg = 180.0/C_PI;
 
