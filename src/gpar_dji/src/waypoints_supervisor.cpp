@@ -80,8 +80,10 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 		pub_msg.data = -1;
 		status_pub.publish(pub_msg);
 
-		if(State ==  WayPointState::Finished)
+		if(State ==  WayPointState::Finished){
 			State =  WayPointState::None;
+			Waypoints_Index = 0;
+		}
 
 		return;
 	}
