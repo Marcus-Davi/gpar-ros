@@ -155,8 +155,9 @@ int main(int argc, char** argv)
 
       ROS_WARN("Failed Obtain SDK control Authority. Releasing. Try again!");
       releaseCtrlAuthority();
-      //startMission=false;
-      return 0;
+      startMission=false;
+      system("rosnode kill dji_sdk");
+
     }
   }
 
@@ -345,6 +346,11 @@ bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service){
 
 }
 
+
+// COMO ???
+//[ WARN] [1569436644.239348600]: ack.info: set = 1 id = 0
+//[ WARN] [1569436644.239551892]: ack.data: 2
+//[ WARN] [1569436644.240054142]: Failed Obtain SDK control Authority. Releasing. Try again!
 
 
 
