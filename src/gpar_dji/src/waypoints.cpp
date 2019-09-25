@@ -157,8 +157,6 @@ int main(int argc, char** argv)
       releaseCtrlAuthority();
       //startMission=false;
       return 0;
-      continue;
-
     }
   }
 

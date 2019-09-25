@@ -15,7 +15,12 @@
 #include <djiosdk/dji_vehicle.hpp>
 #include "dji_sdk/MissionWpGetInfo.h"
 #include "dji_sdk/MissionWaypointTask.h"
+#include <dji_sdk/SendMobileData.h> //responde MSDK
+
+
 #include "gpar_lidar/Command.h"
+
+
 #include <sensor_msgs/NavSatFix.h>
 #include <std_msgs/UInt8.h>
 
@@ -24,12 +29,14 @@
 
 bool CompareCoordinates(double a, double b);
 bool HasReachedWaypoint(const sensor_msgs::NavSatFix& CurrentGPS, const dji_sdk::MissionWaypoint& Waypoint);
+bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service);
 
 bool isLogging = false;
 
 
 ros::ServiceClient waypointInfo;
 ros::ServiceClient cloudController;
+ros::ServiceClient mobile_data_service;
 ros::Publisher status_pub;
 
 enum class WayPointState {
@@ -44,7 +51,7 @@ enum class WayPointState {
 void flight_status_callback(const std_msgs::UInt8::ConstPtr& msg){
 if(msg->data == 5){
 	ROS_INFO("Pousando...");
-	system("rosnode kill /flight_bag");
+	//system("rosnode kill /flight_bag");
 }
 	//	ros::shutdown(); //pousando
 
@@ -53,6 +60,7 @@ if(msg->data == 5){
 void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 {
 	sensor_msgs::NavSatFix current_gps = *msg;
+	static std::string str_msg;
 	static dji_sdk::MissionWaypointTask waypointTask;
 	static dji_sdk::MissionWpGetInfo srv;
 	static gpar_lidar::Command cloud_srv; //Call Cloud Controller
@@ -71,7 +79,7 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 	}
 
 	if(isLogging == false){
-		system("rosrun rosbag record -o /home/linaro/Logs/drone_scan /cloud_ldmrs /tf /tf_static __name:=flight_bag &");
+	//	system("rosrun rosbag record -o /home/linaro/Logs/drone_scan /cloud_ldmrs /tf /tf_static __name:=flight_bag &");
 		isLogging = true;
 	}
 	//Aqui ja tem waypoints!
@@ -85,6 +93,10 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 	if(Waypoints_Index <= Waypoints_Size){ //Ñ chegou ao final
 	if(HasReachedWaypoint(current_gps,waypointTask.mission_waypoint[Waypoints_Index] ) == true)
 		Waypoints_Index++;
+		str_msg = "Chegou ao WP " + std::to_string(Waypoints_Index);
+		MobileSendText(str_msg.c_str(),mobile_data_service);
+
+
 	}
 
 	if(Waypoints_Index == 1) { //primeiro waypoint!
@@ -130,6 +142,8 @@ int main(int argc, char** argv)
   waypointInfo = nh.serviceClient<dji_sdk::MissionWpGetInfo>("dji_sdk/mission_waypoint_getInfo");
 
   cloudController = nh.serviceClient<gpar_lidar::Command>("cloud_controller/command_parser");
+
+  mobile_data_service = nh.serviceClient<dji_sdk::SendMobileData>("dji_sdk/send_data_to_mobile");
  
   ros::Subscriber flightStatusSub = nh.subscribe("dji_sdk/flight_status",10,&flight_status_callback);
 
@@ -156,6 +170,17 @@ bool HasReachedWaypoint(const sensor_msgs::NavSatFix& CurrentGPS, const dji_sdk:
 
 bool CompareCoordinates(double a, double b){
 	return fabs(a - b) < EPSILON;
+}
+
+	static dji_sdk::SendMobileData mobile_data_send;
+bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service){
+
+	std::string str_text(text);
+	mobile_data_send.request.data.resize(str_text.size());
+	memcpy(&mobile_data_send.request.data[0],str_text.c_str(),str_text.size());
+
+	return mobile_data_service.call(mobile_data_send);
+
 }
 
 
