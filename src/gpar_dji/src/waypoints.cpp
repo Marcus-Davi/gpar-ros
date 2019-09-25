@@ -165,6 +165,7 @@ int main(int argc, char** argv)
     		dji_ok = true;
     		ROS_WARN("dji_sdk recarregada");
     		ros::Duration(5.0).sleep();
+    		obtainCtrlAuthority();
     		}
     	}
      }
