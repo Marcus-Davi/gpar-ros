@@ -164,6 +164,7 @@ int main(int argc, char** argv)
     	if(i->compare("/dji_sdk") == 0){
     		dji_ok = true;
     		ROS_WARN("dji_sdk recarregada");
+    		ros::Duration(5.0).sleep();
     		}
     	}
      }
