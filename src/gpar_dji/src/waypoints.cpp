@@ -90,7 +90,6 @@ void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data)
    str_waypointfile = str_waypointpath + str_waypointfilename;
    break;
 
-
    default:
    break;
    }
@@ -99,8 +98,7 @@ void mobile_comm_callback(const dji_sdk::MobileData::ConstPtr& from_mobile_data)
 
     if(valid)
     { //Comando valido ?
-    if (mobile_data_service.call(mobile_data_send) ) //Envio OK ?
-    ROS_INFO("Cmd recebido, OK enviado!"); 
+
     } 
 
 }
@@ -109,7 +107,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "waypoints");
   ros::NodeHandle nh;
-  ros::NodeHandle nh_private("~");
+  //ros::NodeHandle nh_private("~");
  
 
 
@@ -157,8 +155,8 @@ int main(int argc, char** argv)
 
       ROS_WARN("Failed Obtain SDK control Authority. Releasing. Try again!");
       releaseCtrlAuthority();
-
-      startMission=false;
+      //startMission=false;
+      return 0;
       continue;
 
     }
