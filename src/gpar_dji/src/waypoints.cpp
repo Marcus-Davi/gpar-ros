@@ -155,25 +155,18 @@ int main(int argc, char** argv)
     {
       ROS_WARN("Failed Obtain SDK control Authority. Releasing. Try again!");
       releaseCtrlAuthority();
-      startMission=false;
-     system("rosnode kill dji_sdk"); //Gambiarra
+     int sys = system("rosnode kill dji_sdk"); //Gambiarra
+     ROS_WARN("Matando dji_sdk ...");
      dji_ok = false;
-
      while(dji_ok == false){
     ros::master::getNodes(v_string);
     for(std::vector<std::string>::const_iterator i = v_string.begin(); i < v_string.end(); ++i){
-    	ROS_INFO("node = %s",i->c_str());
-    }
-    ros::Duration(1).sleep();
-
-
-
+    	if(i->compare("/dji_sdk") == 0){
+    		dji_ok = true;
+    		ROS_WARN("dji_sdk recarregada");
+    		}
+    	}
      }
-
-
-
-      continue;
-
     }
   }
 
