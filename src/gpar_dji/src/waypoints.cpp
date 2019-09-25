@@ -177,7 +177,7 @@ int main(int argc, char** argv)
     	}
      }
      obtainCtrlAuthority();
-     MobileSendText("Nós prontos! ",mobile_data_service);
+    // MobileSendText("Nós prontos! ",mobile_data_service);
     }
   }
 

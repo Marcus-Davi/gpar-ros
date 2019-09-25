@@ -43,7 +43,6 @@ enum class WayPointState {
 	None,
 	OnWay,
 	First,
-	Last,
 	Finished
 };
 
@@ -72,10 +71,19 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 	static unsigned int Waypoints_Index = 0; //
 
 	if(!waypointInfo.call(srv)){ //Pergunta se há waypoints
-		//ROS_INFO("Esperando Mission . . .");
+		ROS_INFO("Esperando Mission . . .");
 		pub_msg.data = -1;
 		status_pub.publish(pub_msg);
 	return;
+	} else if (srv.response.waypoint_task.mission_waypoint.size() == 0){ //aqui ja provavelmente tivemos missao e acabou
+		ROS_INFO("Esperando Mission . . .");
+		pub_msg.data = -1;
+		status_pub.publish(pub_msg);
+
+		if(State ==  WayPointState::Finished)
+			State =  WayPointState::None;
+
+		return;
 	}
 
 	if(isLogging == false){
@@ -109,7 +117,7 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 		}
 
 	} else if (Waypoints_Index == Waypoints_Size) { //Ultimo
-		if(State != WayPointState::Last){
+		if(State != WayPointState::Finished){
 			MobileSendText("Parando Scan...",mobile_data_service);
 			cloud_srv.request.command = 0; //Stop Scan
 			cloudController.call(cloud_srv);
@@ -119,7 +127,7 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 				ROS_ERROR("Falha ao chamar cloudcontroller service");
 			else{
 				MobileSendText("Scan Salvo com Sucesso!!",mobile_data_service);
-				State = WayPointState::Last;
+				State = WayPointState::Finished;
 			}
 	}
 
