@@ -151,7 +151,12 @@ int main(int argc, char** argv)
                "send the cmd again");
       obtainCtrlAuthority();
     }
-    else
+    else if (ack.ack_data == 0 && ack.cmd_set == 1 && ack.cmd_id == 0)
+    {
+    	MobileSendText("Mude para o modo F e tente novamente!",mobile_data_service);
+    	startMission = false;
+    }
+    else //erros desconhecidos = reinicia tudo :(
     {
       ROS_WARN("Failed Obtain SDK control Authority. Releasing. Try again!");
       releaseCtrlAuthority();
@@ -165,7 +170,6 @@ int main(int argc, char** argv)
     		dji_ok = true;
     		ROS_WARN("dji_sdk recarregada");
     		ros::Duration(5.0).sleep();
-    		obtainCtrlAuthority();
     		}
     	}
      }
