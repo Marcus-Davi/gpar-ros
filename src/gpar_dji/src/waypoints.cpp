@@ -160,6 +160,7 @@ int main(int argc, char** argv)
     {
       ROS_WARN("Failed Obtain SDK control Authority. Releasing. Try again!");
       releaseCtrlAuthority();
+      MobileSendText("Reiniciando nós! ",mobile_data_service);
      int sys = system("rosnode kill dji_sdk"); //Gambiarra
      ROS_WARN("Matando dji_sdk ...");
      dji_ok = false;
@@ -173,6 +174,7 @@ int main(int argc, char** argv)
     		}
     	}
      }
+     MobileSendText("Nós prontos! ",mobile_data_service);
     }
   }
 
@@ -216,6 +218,7 @@ int main(int argc, char** argv)
   if (missionAction(DJI_MISSION_TYPE::WAYPOINT,MISSION_ACTION::START).result)
   {
     ROS_INFO("Mission start command sent successfully");
+    MobileSendText("Iniciado Missao!",mobile_data_service);
   }
   else
   {
