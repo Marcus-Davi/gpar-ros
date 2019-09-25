@@ -91,12 +91,11 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 
 
 	if(Waypoints_Index <= Waypoints_Size){ //Ñ chegou ao final
-	if(HasReachedWaypoint(current_gps,waypointTask.mission_waypoint[Waypoints_Index] ) == true)
+	if(HasReachedWaypoint(current_gps,waypointTask.mission_waypoint[Waypoints_Index] ) == true){
 		Waypoints_Index++;
 		str_msg = "Chegou ao WP " + std::to_string(Waypoints_Index);
 		MobileSendText(str_msg.c_str(),mobile_data_service);
-
-
+	}
 	}
 
 	if(Waypoints_Index == 1) { //primeiro waypoint!
