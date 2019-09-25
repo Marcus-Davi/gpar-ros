@@ -108,8 +108,9 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "waypoints");
   ros::NodeHandle nh;
   //ros::NodeHandle nh_private("~");
- 
 
+  std::vector<std::string> v_string;
+  bool dji_ok;
 
   waypoint_upload_service = nh.serviceClient<dji_sdk::MissionWpUpload>("dji_sdk/mission_waypoint_upload");
 
@@ -152,11 +153,26 @@ int main(int argc, char** argv)
     }
     else
     {
-
       ROS_WARN("Failed Obtain SDK control Authority. Releasing. Try again!");
       releaseCtrlAuthority();
       startMission=false;
-      system("rosnode kill dji_sdk");
+     system("rosnode kill dji_sdk"); //Gambiarra
+     dji_ok = false;
+
+     while(dji_ok == false){
+    ros::master::getNodes(v_string);
+    for(std::vector<std::string>::const_iterator i = v_string.begin(); i < v_string.end(); ++i){
+    	ROS_INFO("node = %s",i->c_str());
+    }
+    ros::Duration(1).sleep();
+
+
+
+     }
+
+
+
+      continue;
 
     }
   }
