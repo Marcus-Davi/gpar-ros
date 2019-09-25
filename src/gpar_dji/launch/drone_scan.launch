@@ -50,15 +50,15 @@
 
   </node>
 
-  <!-- salva leituras num arquivo .bag -->
+  <!-- salva leituras num arquivo .bag 
   <node pkg="rosbag" type="record" name="rosbag_record_scan"
    args="record -o /home/linaro/drone_scan /cloud_ldmrs /tf /tf_static" />
-
+ -->
   <!-- roda mission waypoint -->
     <node pkg="gpar_dji" type="waypoints" name="waypoints" output="screen" respawn="true"/>
 
       <!-- Roda Supervisor -->
-  <node pkg="gpar_dji" type="waypoints_supervisor" name="waypoints_supervisor" output="screen" required="true"/>
+  <node pkg="gpar_dji" type="waypoints_supervisor" name="waypoints_supervisor" output="screen" raspawn="true"/>
 
 
   <!-- upload the robot_description URDF (in this demo, the "robot" is only the LD-MRS) 
