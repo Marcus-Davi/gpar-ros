@@ -24,6 +24,7 @@ ros::Subscriber mobile_comm_sub;
 dji_sdk::SendMobileData mobile_data_send;
 
 dji_sdk::MissionWaypointTask waypointTask;
+
 bool startMission = false;
 float idle_vel = 8;
 
@@ -155,6 +156,7 @@ int main(int argc, char** argv)
     {
     	MobileSendText("Mude para o modo F e tente novamente!",mobile_data_service);
     	startMission = false;
+    	continue;
     }
     else //erros desconhecidos = reinicia tudo :(
     {
