@@ -164,6 +164,7 @@ int main(int argc, char** argv)
       releaseCtrlAuthority();
       MobileSendText("Reiniciando nós! ",mobile_data_service);
      int sys = system("rosnode kill dji_sdk"); //Gambiarra
+     ros::Duration(5.0).sleep();
      ROS_WARN("Matando dji_sdk ...");
      dji_ok = false;
      while(dji_ok == false){
@@ -172,10 +173,10 @@ int main(int argc, char** argv)
     	if(i->compare("/dji_sdk") == 0){
     		dji_ok = true;
     		ROS_WARN("dji_sdk recarregada");
-    		ros::Duration(5.0).sleep();
     		}
     	}
      }
+     obtainCtrlAuthority();
      MobileSendText("Nós prontos! ",mobile_data_service);
     }
   }
