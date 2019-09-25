@@ -172,9 +172,8 @@ bool CompareCoordinates(double a, double b){
 	return fabs(a - b) < EPSILON;
 }
 
-	static dji_sdk::SendMobileData mobile_data_send;
 bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service){
-
+	static dji_sdk::SendMobileData mobile_data_send;
 	std::string str_text(text);
 	mobile_data_send.request.data.resize(str_text.size());
 	memcpy(&mobile_data_send.request.data[0],str_text.c_str(),str_text.size());
