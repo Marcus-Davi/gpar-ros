@@ -72,7 +72,7 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 	static unsigned int Waypoints_Index = 0; //
 
 	if(!waypointInfo.call(srv)){ //Pergunta se há waypoints
-		ROS_INFO("Esperando Mission . . .");
+		//ROS_INFO("Esperando Mission . . .");
 		pub_msg.data = -1;
 		status_pub.publish(pub_msg);
 	return;
