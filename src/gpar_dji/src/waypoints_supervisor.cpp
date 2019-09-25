@@ -100,6 +100,7 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 
 	if(Waypoints_Index == 1) { //primeiro waypoint!
 		if(State != WayPointState::First){
+			MobileSendText("Iniciando Scan...",mobile_data_service);
 			cloud_srv.request.command = 1; //Start Scan
 			if(!cloudController.call(cloud_srv))
 		         ROS_ERROR("Falha ao chamar cloudcontroller service");
@@ -109,13 +110,19 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 
 	} else if (Waypoints_Index == Waypoints_Size) { //Ultimo
 		if(State != WayPointState::Last){
+			MobileSendText("Parou Scan.",mobile_data_service);
 			cloud_srv.request.command = 0; //Stop Scan
 			cloudController.call(cloud_srv);
+			MobileSendText("Salvando Scan...",mobile_data_service);
 			cloud_srv.request.command = 3; //Save Points
 			if(!cloudController.call(cloud_srv))
 				ROS_ERROR("Falha ao chamar cloudcontroller service");
-			else
+			else{
 				State = WayPointState::Last;
+				MobileSendText("Scan Salvo com sucesso!!!",mobile_data_service);
+			}
+
+			}
 	}
 
 	}
