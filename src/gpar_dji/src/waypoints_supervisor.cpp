@@ -76,6 +76,7 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 
 	if(!waypointInfo.call(srv)){ //Pergunta se há waypoints
 		ROS_INFO("Esperando Mission . . .");
+		MobileSendText("Esperando Mission . . .",mobile_data_service);
 		pub_msg.data = -1;
 		status_pub.publish(pub_msg);
 
@@ -87,6 +88,7 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 	return;
 	} else if (srv.response.waypoint_task.mission_waypoint.size() == 0){ //aqui ja provavelmente tivemos missao e acabou
 		ROS_INFO("Esperando Mission . . .");
+		MobileSendText("Esperando Mission . . .",mobile_data_service);
 		pub_msg.data = -1;
 		status_pub.publish(pub_msg);
 
