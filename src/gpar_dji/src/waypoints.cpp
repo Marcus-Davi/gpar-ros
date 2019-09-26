@@ -221,7 +221,7 @@ int main(int argc, char** argv)
   if (missionAction(DJI_MISSION_TYPE::WAYPOINT,MISSION_ACTION::START).result)
   {
     ROS_INFO("Mission start command sent successfully");
-    MobileSendText("Iniciado Missao!",mobile_data_service);
+    MobileSendText("Iniciando Missao!",mobile_data_service);
   }
   else
   {

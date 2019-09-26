@@ -58,7 +58,7 @@
     <node pkg="gpar_dji" type="waypoints" name="waypoints" output="screen" respawn="true"/>
 
       <!-- Roda Supervisor -->
-  <node pkg="gpar_dji" type="waypoints_supervisor" name="waypoints_supervisor" output="screen" raspawn="true"/>
+  <node pkg="gpar_dji" type="waypoints_supervisor" name="waypoints_supervisor" output="screen" respawn="true"/>
 
 
   <!-- upload the robot_description URDF (in this demo, the "robot" is only the LD-MRS) 
