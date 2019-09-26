@@ -25,7 +25,7 @@
 #include <std_msgs/UInt8.h>
 
 // 1m ~ 0.000001 graus !
-#define EPSILON 0.000038f //10m
+#define EPSILON 0.00004f //10m
 
 bool CompareCoordinates(double a, double b);
 bool HasReachedWaypoint(const sensor_msgs::NavSatFix& CurrentGPS, const dji_sdk::MissionWaypoint& Waypoint);
@@ -46,7 +46,7 @@ enum class WayPointState {
 	Finished
 };
 
-
+//testa o estado de vôo.
 void flight_status_callback(const std_msgs::UInt8::ConstPtr& msg){
 if(msg->data == 5){
 	ROS_INFO("Pousando...");
@@ -62,12 +62,12 @@ if(msg->data == 5){
 
 void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 {
-	sensor_msgs::NavSatFix current_gps = *msg;
-	static std::string str_msg;
-	static dji_sdk::MissionWaypointTask waypointTask;
-	static dji_sdk::MissionWpGetInfo srv;
+	sensor_msgs::NavSatFix current_gps = *msg; //dado GPS
+	static std::string str_msg; //msg pra enviar
+	static dji_sdk::MissionWaypointTask waypointTask; //
+	static dji_sdk::MissionWpGetInfo srv; //Recebe informação de missão
 	static gpar_lidar::Command cloud_srv; //Call Cloud Controller
-	std_msgs::UInt8 pub_msg;
+	std_msgs::UInt8 pub_msg; //publica status
 	unsigned int Waypoints_Size;
     static WayPointState State = WayPointState::None;
 
@@ -75,20 +75,18 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 	static unsigned int Waypoints_Index = 0; //
 
 	if(!waypointInfo.call(srv)){ //Pergunta se há waypoints
-		ROS_INFO("Esperando Mission . . .");
-		MobileSendText("Esperando Mission . . .",mobile_data_service);
+	//	ROS_INFO("Esperando Mission . . .");
+	//	MobileSendText("Esperando Mission . . .",mobile_data_service);
 		pub_msg.data = -1;
 		status_pub.publish(pub_msg);
-
 		if(isLogging){
 		int sys = system("rosnode kill /flight_bag");
 		isLogging = false;
 		}
-
 	return;
 	} else if (srv.response.waypoint_task.mission_waypoint.size() == 0){ //aqui ja provavelmente tivemos missao e acabou
-		ROS_INFO("Esperando Mission . . .");
-		MobileSendText("Esperando Mission . . .",mobile_data_service);
+	//	ROS_INFO("Esperando Mission . . .");
+	//	MobileSendText("Esperando Mission . . .",mobile_data_service);
 		pub_msg.data = -1;
 		status_pub.publish(pub_msg);
 
@@ -105,14 +103,12 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 		return;
 	}
 
+	//Inicia Log de Vôo
 	if(isLogging == false){
 		int sys = system("rosrun rosbag record -o /home/linaro/Logs/drone_scan /cloud_ldmrs /tf /tf_static __name:=flight_bag &");
 		isLogging = true;
 	}
 	//Aqui ja tem waypoints!
-
-
-	//Waypoints carregados aqui
 	waypointTask = srv.response.waypoint_task;
 	Waypoints_Size = waypointTask.mission_waypoint.size();
 
@@ -125,7 +121,7 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 	}
 	}
 
-	if(Waypoints_Index == 1) { //primeiro waypoint!
+	if(Waypoints_Index == 1) { //Primeiro WP
 		if(State != WayPointState::First){
 			MobileSendText("Inciando Scan...",mobile_data_service);
 			cloud_srv.request.command = 1; //Start Scan
@@ -135,7 +131,7 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 				State = WayPointState::First;
 		}
 
-	} else if (Waypoints_Index == Waypoints_Size) { //Ultimo
+	} else if (Waypoints_Index == Waypoints_Size) { //Ultimo WP
 		if(State != WayPointState::Finished){
 			MobileSendText("Parando Scan...",mobile_data_service);
 			cloud_srv.request.command = 0; //Stop Scan
@@ -146,6 +142,8 @@ void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& msg) //~50Hz
 				ROS_ERROR("Falha ao chamar cloudcontroller service");
 			else{
 				MobileSendText("Scan Salvo com Sucesso!!",mobile_data_service);
+				cloud_srv.request.command = 2; //Reset Scan
+				cloudController.call(cloud_srv);
 				State = WayPointState::Finished;
 			}
 	}
@@ -164,21 +162,28 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "waypoints_supervisor");
   ros::NodeHandle nh;
-//  ros::NodeHandle nh_private("~");
 
+
+  //Pega informações da missão
   waypointInfo = nh.serviceClient<dji_sdk::MissionWpGetInfo>("dji_sdk/mission_waypoint_getInfo");
 
+  //Controle sobre a nuvem de pontos (iniciar scan, parar, resetar .. )
   cloudController = nh.serviceClient<gpar_lidar::Command>("cloud_controller/command_parser");
 
+  //Envio de dados MSDK
   mobile_data_service = nh.serviceClient<dji_sdk::SendMobileData>("dji_sdk/send_data_to_mobile");
  
+  //Status de Vôo (voando, pouso .. )
   ros::Subscriber flightStatusSub = nh.subscribe("dji_sdk/flight_status",10,&flight_status_callback);
 
+  //Informação GPS-Fusão
   ros::Subscriber gpsSub  = nh.subscribe("dji_sdk/gps_position", 10, &gps_callback); //50Hz
 
-  status_pub = nh.advertise<std_msgs::UInt8>("waypoint_supervisor", 100);
+  //Publica o estado atual (inteiro)
+  status_pub = nh.advertise<std_msgs::UInt8>("waypoint_supervisor", 10);
 
 
+  //Espera callbacks
   ros::spin();
 
   return 0;
@@ -186,7 +191,7 @@ int main(int argc, char** argv)
 }
 
 
-
+//Testa se o drone está no WP
 bool HasReachedWaypoint(const sensor_msgs::NavSatFix& CurrentGPS, const dji_sdk::MissionWaypoint& Waypoint){
 	bool isLatEqual = CompareCoordinates(CurrentGPS.latitude,Waypoint.latitude);
 	bool isLonEqual = CompareCoordinates(CurrentGPS.longitude,Waypoint.longitude);
@@ -194,11 +199,12 @@ bool HasReachedWaypoint(const sensor_msgs::NavSatFix& CurrentGPS, const dji_sdk:
 	return (isLatEqual && isLonEqual);
 }
 
-
+//Comparação float relaxada por EPSILON
 bool CompareCoordinates(double a, double b){
 	return fabs(a - b) < EPSILON;
 }
 
+//Envio de texto MSDK
 bool MobileSendText(const char * text, ros::ServiceClient& mobile_data_service){
 	static dji_sdk::SendMobileData mobile_data_send;
 	std::string str_text(text);
