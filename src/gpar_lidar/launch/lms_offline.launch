@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+
+	<param name="/use_sim_time" value="true" />
+
+  <node name="cloud_controller_lms" pkg="gpar_lidar" type="cloud_controller_lms" output="screen">
+    <param name="input_cloud" type="str" value="cloud" />
+   </node>
+
+
+  <!-- This bag has to have immediate lidar scan and correspondent transforms! -->
+    <node name="playbag" pkg="rosbag" type="play"
+      args="$(arg bag_filename) --pause --clock" output="screen" />
+
+      <node name="rviz" pkg="rviz" type="rviz" required="true"
+      args="-d $(find gpar_lidar)/rviz/lms.rviz" />
+
+   <node name="resetpoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 2" />
+   <node name="savepoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 1" />
+
+</launch>
+

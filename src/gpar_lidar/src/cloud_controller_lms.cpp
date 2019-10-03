@@ -42,18 +42,19 @@
 
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl/point_cloud.h>
-
+#include <pcl/io/pcd_io.h>
 #include <pcl_ros/transforms.h>
 #include <pcl_ros/impl/transforms.hpp>   // necessary because of custom point type
 
 #include <gpar_lidar/Command.h>
 
 #include <fstream> //file save
+#include <sys/stat.h>
+#include <ctime>
 using namespace std;
 ofstream myfile;
 
-
-
+void ResolveDir();
 
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudT;
@@ -67,10 +68,17 @@ PointCloudT::Ptr cloud_lower_ = boost::make_shared<PointCloudT>();
 void savePoints(PointCloudT::Ptr pc){
  ros::Time time = ros::Time::now();
 
+ std::time_t std_time;
+ std_time = time.sec;
+ char* time_date = std::ctime(&std_time);
+
+ ResolveDir(); //cria ou verifica existencia do diretorio
 char* home_path = getenv("HOME");
-std::string str_path = std::string(home_path) + "/pontos_";
+std::string str_path = std::string(home_path) + "/Pontos/pontos_";
+//std::string str_time = std::string(time_date);
 std::string str_time = std::to_string(time.sec);
 std::string str = str_path + str_time + ".txt";
+std::string str_pcd = str_path + str_time + ".pcd";
 
 myfile.open(str); 
 //ROS_INFO("file n = %s",str.c_str());
@@ -79,8 +87,9 @@ for (size_t i = 0; i < pc->points.size(); i++) {
        myfile << pc->points[i].x << " " << pc->points[i].y << " " <<pc->points[i].z << endl;
 //ROS_INFO("%f",pc->points[i].x);
   }
-
 myfile.close();
+//if(pc->points.size() > 0)
+//	pcl::io::savePCDFileASCII (str_pcd, *pc); //EXPERIMENTAL
 ROS_INFO("%lu Pontos salvos em %s !\n",pc->points.size(),str.c_str());
 
 
@@ -207,3 +216,18 @@ int main(int argc, char **argv)
 
   return 0;
 }
+
+
+void ResolveDir(){
+struct stat statbuff;
+bool isDir = 0;
+char* home_path = getenv("HOME");
+string pontos_path = std::string(home_path) + "/Pontos/";
+if(stat(pontos_path.c_str(),&statbuff) == -1) {
+	mkdir(pontos_path.c_str(),0755);
+	}
+
+}
+
+
+
