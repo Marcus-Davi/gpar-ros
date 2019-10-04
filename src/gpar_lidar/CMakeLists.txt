@@ -168,8 +168,14 @@ include_directories(
 
 add_executable(cloud_controller src/cloud_controller.cpp)
 add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
+add_executable(slider_node src/slider_node.cpp)
 
 target_link_libraries(cloud_controller
+ ${catkin_LIBRARIES}
+#  ${PCL_LIBRARIES}
+)
+
+target_link_libraries(slider_node
  ${catkin_LIBRARIES}
 #  ${PCL_LIBRARIES}
 )
