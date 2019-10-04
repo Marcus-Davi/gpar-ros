@@ -46,9 +46,7 @@
       <node name="rviz" pkg="rviz" type="rviz" required="true"
       args="-d $(find gpar_lidar)/rviz/lms_plot.rviz" />
 
-      <node name="slider_node" pkg="gpar_lidar" type="slider_node" output="screen" >
-	<param name="slider_x_vel" type="double" value="0.03333" />
-	</node>
+      <node name="slider_node_v2" pkg="gpar_lidar" type="slider_node_v2" />
 
   <!-- Cloud manager service -->
  <node pkg="gpar_lidar" name="cloud_controller_lms" type="cloud_controller_lms" output="screen">
@@ -57,6 +55,8 @@
 
   <node pkg="tf2_ros" type="static_transform_publisher" name="link_lms" args="0 0 0 0 1.57079632679 0 link cloud" />
 
+
+  <node pkg="gpar_mcuserial" type="mcuserial_node_gcode" name="mcuserial_node_gcode" output="screen"/>
 
    <node name="resetpoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 2" /> <!-- RESET CLOUD -->
    <node name="savepoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 1" /> <!-- MERGE CLOUD -->

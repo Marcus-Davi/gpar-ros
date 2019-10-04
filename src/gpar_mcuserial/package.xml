@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>gpar-mcuserial</name>
+  <name>gpar_mcuserial</name>
   <version>0.0.0</version>
-  <description>The gpar-mcuserial package</description>
+  <description>The gpar_mcuserial package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
