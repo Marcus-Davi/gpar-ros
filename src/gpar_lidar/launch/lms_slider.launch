@@ -1,18 +1,6 @@
 <?xml version="1.0"?>
 <launch>
 <arg name="hostname" default="192.168.0.8" />
-
-
-<node pkg="gpar-mcuserial" type="mcuserial_node" name="mcuserial_node" >
-   <param name="serial_port" type="string" value="/dev/ttyACM0"/>
-   </node>
-
-  <node pkg="gpar_k64f" type="gpar_k64f_node" name="imu_k64f_node" output="screen" >
-	<param name="k64f_frame" type="string" value ="map" />
-  </node>
-
- 
-  <!-- start the actual driver node -->
   
 <!-- launch file for the lms_5xx series -->
   <node name="sick_lms_5xx" pkg="sick_scan" type="sick_generic_caller"  respawn="false" output="screen">
@@ -55,14 +43,23 @@
 
   </node>
 
-  <node name="cloud_controller_lms" pkg="gpar_lidar" type="cloud_controller_lms" output="screen">
+      <node name="rviz" pkg="rviz" type="rviz" required="true"
+      args="-d $(find gpar_lidar)/rviz/lms_plot.rviz" />
+
+      <node name="slider_node" pkg="gpar_lidar" type="slider_node" output="screen" >
+	<param name="slider_x_vel" type="double" value="0.03333" />
+	</node>
+
+  <!-- Cloud manager service -->
+ <node pkg="gpar_lidar" name="cloud_controller_lms" type="cloud_controller_lms" output="screen">
     <param name="input_cloud" type="str" value="cloud" />
    </node>
 
-<!--
- <node pkg="rosbag" type="record" name="rosbag_record_scan"
-	 args="-o /home/marcus/drone_scan /cloud /tf /tf_static" />
--->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="link_lms" args="0 0 0 0 1.57079632679 0 link cloud" />
+
+
+   <node name="resetpoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 2" /> <!-- RESET CLOUD -->
+   <node name="savepoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 1" /> <!-- MERGE CLOUD -->
 
 
 </launch>

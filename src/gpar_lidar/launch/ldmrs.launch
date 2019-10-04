@@ -5,7 +5,7 @@
   <node pkg="tf2_ros" type="static_transform_publisher" name="static_ldmrs_imu_link" args="0 0 0 0 0 0 imu ldmrs_mount_link" />
   <node pkg="tf2_ros" type="static_transform_publisher" name="static_ldmrs_link" args="0.044 0.02325 0 0 0 0 ldmrs_mount_link ldmrs" />
 
-
+<!--
   <node pkg="mcuserial" type="mcuserial_node" name="mcuserial_node" >
    	<param name="serial_port" type="string" value="/dev/ttyACM0"/>
    </node>
@@ -14,6 +14,7 @@
 	<param name="k64f_frame" type="string" value="imu"/>
   </node>
 
+-->
 
   <!-- start the actual driver node -->
   <node name="sick_ldmrs_node" pkg="sick_ldmrs_driver" type="sick_ldmrs_node" output="screen">
