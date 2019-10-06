@@ -96,7 +96,7 @@ return -1;
  std_msgs::String leitura;
   while(ros::ok()){ //sai se der ctol_c
 
-
+//comentado no laptop dell
 if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             auto line = future.get();
 
