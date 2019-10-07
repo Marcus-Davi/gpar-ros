@@ -37,10 +37,14 @@ bool terminal_ok = false;
 
 void GetLineFromCin() {
 
+
+	std::string text_in;
+
 	while(ros::ok()){
 
-    std::getline(std::cin, from_terminal); //recebe do terminal
-    std::cout << "msg do terminal : " << from_terminal << std::endl;
+    std::getline(std::cin, text_in); //recebe do terminal
+    from_terminal = text_in;
+    //std::cout << "msg do terminal : " << from_terminal << std::endl;
     terminal_ok = true;
 	}
     
@@ -101,7 +105,7 @@ if(mcu_serial.isOpen()){
 return -1; //tentar novamente ?
 }
 
-  ros::Rate r(20);
+  ros::Rate r(50);
  std_msgs::String leitura;
  std::string read_answer;
 
@@ -112,7 +116,7 @@ if(terminal_ok){
 	
 	mcu_serial.write(from_terminal + "\r");
 	read_answer = mcu_serial.readline(100,"\r");
-	std::cout << "Slider : "<< read_answer << std::endl;
+	std::cout << "Slider resp: "<< read_answer << std::endl;
 	terminal_ok = false;
         } else {
 
