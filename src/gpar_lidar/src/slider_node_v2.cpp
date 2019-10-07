@@ -28,11 +28,11 @@
 
 void callback_serial(const std_msgs::String::ConstPtr& msg){
 float x;
-//float y;
+float y;
 char* start;
 //sscanf(msg->data.c_str(),"WPos:%f",&y);
 if(( start = strstr((char*)msg->data.c_str(),"WPos:") ) != NULL){
-sscanf(start,"WPos:%f,",&x);
+sscanf(start,"WPos:%f,%f",&x,&y);
 } else {
 
 }
@@ -54,7 +54,7 @@ transformStamped.child_frame_id = "map";
 
 
 transformStamped.transform.translation.x = x/1000; //milimetros -> metros
-transformStamped.transform.translation.y = 0;
+transformStamped.transform.translation.y = y/1000;
 transformStamped.transform.translation.z = -3.0; //Altura pro chão
 
 transformStamped.transform.rotation.w  = 1;
