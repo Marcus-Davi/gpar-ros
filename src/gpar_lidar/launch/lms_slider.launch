@@ -59,7 +59,7 @@
   <node pkg="gpar_mcuserial" type="mcuserial_node_gcode" name="mcuserial_node_gcode" output="screen"/>
 
    <node name="resetpoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 2" /> <!-- RESET CLOUD -->
-   <node name="savepoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 1" /> <!-- MERGE CLOUD -->
+   <node name="savepoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 0" /> <!-- MERGE CLOUD -->
 
 
 </launch>

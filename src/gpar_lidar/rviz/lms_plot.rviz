@@ -87,8 +87,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 3.3443586826324463
-        Min Value: -0.03429913520812988
+        Max Value: 3.350855827331543
+        Min Value: -0.09297752380371094
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -107,7 +107,7 @@ Visualization Manager:
       Queue Size: 10000
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.004999999888241291
       Style: Flat Squares
       Topic: /map_cloud
       Unreliable: false
@@ -142,25 +142,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 10.796769142150879
+      Distance: 5.6977996826171875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -3.926388740539551
-        Y: -3.2203774452209473
+        X: -1.7280473709106445
+        Y: -3.382422924041748
         Z: 9.5367431640625e-7
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2103985995054245
+      Pitch: 0.2653985619544983
       Target Frame: drone
       Value: ThirdPersonFollower (rviz)
-      Yaw: 4.146730899810791
+      Yaw: 4.471732139587402
     Saved: ~
 Window Geometry:
   Displays:
