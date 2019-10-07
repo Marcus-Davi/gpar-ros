@@ -27,14 +27,27 @@
 
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include <future>
-#include <sstream>
+#include <iostream>
 #include <serial/serial.h>
 
-std::string GetLineFromCin() {
-    std::string line;
-    std::getline(std::cin, line);
-    return line;
+#include <thread>
+
+std::string from_terminal;
+bool terminal_ok = false;
+
+void GetLineFromCin() {
+
+
+	std::string text_in;
+
+	while(ros::ok()){
+
+    std::getline(std::cin, text_in); //recebe do terminal
+    from_terminal = text_in;
+    //std::cout << "msg do terminal : " << from_terminal << std::endl;
+    terminal_ok = true;
+	}
+    
 }
 
 /**
@@ -79,8 +92,8 @@ int main(int argc, char **argv)
   serial::Serial mcu_serial(porta_serial,115200,serial::Timeout::simpleTimeout(1000));
 
 	//ASYNC
-
-	auto future = std::async(std::launch::async, GetLineFromCin);
+	std::thread input_read_thread(GetLineFromCin);
+//	auto future = std::async(std::launch::async, GetLineFromCin);
 
 
 
@@ -89,25 +102,22 @@ if(mcu_serial.isOpen()){
  ROS_INFO("Porta Serial aberta!");
 } else {
  ROS_INFO("Problema ao abrir a porta %s ! ela existe?",porta_serial.c_str());
-return -1;
+return -1; //tentar novamente ?
 }
 
-  ros::Rate r(20);
+  ros::Rate r(50);
  std_msgs::String leitura;
+ std::string read_answer;
+
   while(ros::ok()){ //sai se der ctol_c
 
 //comentado no laptop dell
-if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            auto line = future.get();
-
-            // Set a new line. Subtle race condition between the previous line
-            // and this. Some lines could be missed. To aleviate, you need an
-            // io-only thread. I'll give an example of that as well.
-            future = std::async(std::launch::async, GetLineFromCin);
-
-	mcu_serial.write(line + "\r");
-//	leitura.data = mcu_serial.readline(1000,"\r"); //TODO IMPLEMENTAR LEITURA DO OK!
-  //          std::cout << "GCODE:  " << leitura.data << std::endl;
+if(terminal_ok){
+	
+	mcu_serial.write(from_terminal + "\r");
+	read_answer = mcu_serial.readline(100,"\r");
+	std::cout << "Slider resp: "<< read_answer << std::endl;
+	terminal_ok = false;
         } else {
 
 	mcu_serial.write("?");
@@ -117,13 +127,8 @@ if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
 
 }
 
-
 	ros::spinOnce();
 	r.sleep();
-
-
-
-
 
 	}
 
