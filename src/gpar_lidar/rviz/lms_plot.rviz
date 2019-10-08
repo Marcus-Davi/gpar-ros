@@ -54,7 +54,7 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 1
+    - Alpha: 0.8999999761581421
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 10
@@ -76,9 +76,9 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 3
+      Size (Pixels): 5
       Size (m): 0.009999999776482582
-      Style: Flat Squares
+      Style: Points
       Topic: /cloud
       Unreliable: false
       Use Fixed Frame: true
@@ -88,7 +88,7 @@ Visualization Manager:
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 3.350855827331543
-        Min Value: -0.09297752380371094
+        Min Value: -0.12726855278015137
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -106,9 +106,9 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 10000
       Selectable: true
-      Size (Pixels): 3
+      Size (Pixels): 2
       Size (m): 0.004999999888241291
-      Style: Flat Squares
+      Style: Points
       Topic: /map_cloud
       Unreliable: false
       Use Fixed Frame: true
@@ -142,25 +142,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 5.6977996826171875
+      Distance: 5.122934818267822
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.7280473709106445
-        Y: -3.382422924041748
-        Z: 9.5367431640625e-7
+        X: 0.34685423970222473
+        Y: -1.4486607313156128
+        Z: 2.384185791015625e-7
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2653985619544983
+      Pitch: 0.11539880186319351
       Target Frame: drone
       Value: ThirdPersonFollower (rviz)
-      Yaw: 4.471732139587402
+      Yaw: 5.266696929931641
     Saved: ~
 Window Geometry:
   Displays:
