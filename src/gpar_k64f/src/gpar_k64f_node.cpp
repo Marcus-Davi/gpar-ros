@@ -47,7 +47,7 @@ transformStamped.child_frame_id = child_frame; //"cloud" ou "imu"
 
 transformStamped.transform.translation.x = 0;
 transformStamped.transform.translation.y = 0;
-transformStamped.transform.translation.z = 0; 
+transformStamped.transform.translation.z = 1; 
 
 
 	float q0,q1,q2,q3;
@@ -95,14 +95,14 @@ int main(int argc, char **argv)
 {}
    else{
 	ROS_INFO("k64f_child_frame NOT SET");
-	child_frame = "cloud";
+	child_frame = "k64f_frame_child";
 	}
 
   if ( n.getParam("k64f_frame",frame) )
 {}
    else{
 	ROS_INFO("k64f_frame NOT SET");
-	frame = "map";
+	frame = "k64f_frame";
 	}
 
 	ROS_INFO("k64f_frame : %s",frame.c_str());

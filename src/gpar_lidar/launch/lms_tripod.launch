@@ -7,9 +7,22 @@
    <param name="serial_port" type="string" value="/dev/ttyACM0"/>
    </node>
 
+   <!-- Frame = k64f_imu -->
   <node pkg="gpar_k64f" type="gpar_k64f_node" name="imu_k64f_node" output="screen" >
-	<param name="k64f_frame" type="string" value ="map" />
-  </node>
+   <param name="k64f_frame" type="string" value="map"/>
+   <param name="k64f_child_frame" type="string" value="tripe"/>
+   </node>
+
+ <node pkg="tf2_ros" type="static_transform_publisher" name="static_tripe_lidar1" args="0.07 0 0 0 0 0 tripe cloud" />
+ <node pkg="tf2_ros" type="static_transform_publisher" name="static_tripe_lidar2" args="0 0 0.1 0 0 0 cloud imu" />
+
+
+
+<!--  <node pkg="tf2_ros" type="static_transform_publisher" name="static_cloud_imu" args="0.0 0 0.1 0 0 0 cloud imu_child" /> -->
+
+ 
+
+
 
  
   <!-- start the actual driver node -->
@@ -60,7 +73,7 @@
    </node>
 
       <node name="rviz" pkg="rviz" type="rviz" required="true"
-      args="-d $(find gpar_lidar)/rviz/lms_plot.rviz" />
+      args="-d $(find gpar_lidar)/rviz/lms_plot.rviz" /> 
 
 <!--
  <node pkg="rosbag" type="record" name="rosbag_record_scan"
