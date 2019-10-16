@@ -16,7 +16,7 @@
       args="-d $(find gpar_lidar)/rviz/lms.rviz" />
 
    <node name="resetpoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 2" />
-   <node name="savepoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 1" />
+   <node name="savepoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller_lms/command_parser 0" />
 
 </launch>
 
