@@ -70,7 +70,7 @@ int main(int argc, char **argv)
    * part of the ROS system.
    */
 
-  ros::init(argc, argv, "nanook_manual_node");
+  ros::init(argc, argv, "bubblerob_move");
 
   /**
    * NodeHandle is the main access point to communications with the ROS system.
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 
   ros::NodeHandle nh;
 
-   chatter_pub = nh.advertise<geometry_msgs::Twist>("nanook_move", 1000);
+   chatter_pub = nh.advertise<geometry_msgs::Twist>("move", 1000);
 
   boost::thread my_thread(keyLoop);
 
