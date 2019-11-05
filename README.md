@@ -8,9 +8,6 @@ Os arquivos aqui contidos são pacotes ROS fornecidos pela DJI ou pela comunidad
 Contato: davi2812@dee.ufc.br ou gpardee@dee.ufc.br
 
 Pacotes **ROS** do repositório:
-
- * gpar_dji
-    - Pacote Principal. Contém implementação de missões; supervisor de posição; conversão de IMU para transformadas; Comunicação com *MSDK*. Usa **Onboard-SDK-ROS-3.8**
     
  * gpar_lidar
     - Pacote de construção de nuvem de pontos. Usa a **sick_ldmrs_laser**.
