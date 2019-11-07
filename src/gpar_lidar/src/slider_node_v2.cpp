@@ -34,7 +34,7 @@ char* start;
 if(( start = strstr((char*)msg->data.c_str(),"WPos:") ) != NULL){
 sscanf(start,"WPos:%f,%f",&x,&y);
 } else {
-
+return;
 }
 
 //ROS_INFO("msg : %s",msg->data.c_str());
