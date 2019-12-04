@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf2
   tf2_ros
-  sick_ldmrs_msgs
   pcl_conversions
   pcl_ros
   message_generation
@@ -166,32 +165,13 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
-add_executable(cloud_controller src/cloud_controller.cpp)
 add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
-add_executable(slider_node src/slider_node.cpp)
-add_executable(slider_node_v2 src/slider_node_v2.cpp)
-
-target_link_libraries(cloud_controller
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(slider_node
- ${catkin_LIBRARIES}
-)
-
-target_link_libraries(slider_node_v2
- ${catkin_LIBRARIES}
-)
 
 target_link_libraries(cloud_controller_lms
  ${catkin_LIBRARIES}
 #  ${PCL_LIBRARIES}
 )
 
-add_dependencies(cloud_controller gpar_lidar_gencpp)
-add_dependencies(slider_node gpar_lidar_gencpp)
-add_dependencies(slider_node_v2 gpar_lidar_gencpp)
 add_dependencies(cloud_controller_lms gpar_lidar_gencpp)
 #############
 ## Install ##

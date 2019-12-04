@@ -2,8 +2,8 @@
 <launch>
 <arg name="hostname" default="192.168.0.5" />
 
-
-<node pkg="gpar_mcuserial" type="mcuserial_node" name="mcuserial_node" >
+<!--
+<node pkg="gpar-mcuserial" type="mcuserial_node" name="mcuserial_node" >
    <param name="serial_port" type="string" value="/dev/ttyACM0"/>
    </node>
 
@@ -11,7 +11,7 @@
 	<param name="k64f_frame" type="string" value ="map" />
   </node>
 
- 
+  -->
   <!-- start the actual driver node -->
   
 <!-- launch file for the lms_5xx series -->
@@ -55,17 +55,6 @@
 
   </node>
 
-  <node name="cloud_controller_lms" pkg="gpar_lidar" type="cloud_controller_lms" output="screen">
-    <param name="input_cloud" type="str" value="cloud" />
-   </node>
-
-      <node name="rviz" pkg="rviz" type="rviz" required="true"
-      args="-d $(find gpar_lidar)/rviz/lms_plot.rviz" />
-
-<!--
- <node pkg="rosbag" type="record" name="rosbag_record_scan"
-	 args="-o /home/marcus/drone_scan /cloud /tf /tf_static" />
--->
 
 
 </launch>

@@ -1,7 +1,0 @@
-<launch>
- 	<node pkg="mcuserial" type="mcuserial_node" name="mcuserial_node" output="screen">
-	<!-- node parameters -->
-	<param name="serial_port" type="string" value="/dev/ttyACM0"/>
-
-	</node>
-</launch>
