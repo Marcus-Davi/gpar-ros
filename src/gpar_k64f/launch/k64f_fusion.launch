@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+<arg name="hostname" default="192.168.0.5" />
+
+
+<node pkg="gpar_mcuserial" type="mcuserial_node" name="mcuserial_node" >
+   <param name="serial_port" type="string" value="/dev/ttyACM0"/>
+   </node>
+
+   <!-- Frame = k64f_imu -->
+  <node pkg="gpar_k64f" type="k64f_fusion" name="k64f_fusion_node" output="screen" >
+   <param name="k64f_frame" type="string" value="map"/>
+   <param name="k64f_child_frame" type="string" value="k64f"/>
+   </node>
+
+      <node name="rviz" pkg="rviz" type="rviz" required="true"
+      args="-d $(find gpar_k64f)/rviz/k64f_fusion.rviz" /> 
+
+
+</launch>
