@@ -169,7 +169,6 @@ include_directories(
 
 add_executable(cloud_controller src/cloud_controller.cpp)
 add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
-add_executable(cloud_controller_hokuyo src/cloud_controller_hokuyo.cpp)
 add_executable(slider_node src/slider_node.cpp)
 add_executable(slider_node_v2 src/slider_node_v2.cpp)
 add_executable(hokuyo_cloud src/hokuyo_cloud.cpp)
@@ -188,10 +187,6 @@ target_link_libraries(slider_node_v2
 )
 
 target_link_libraries(cloud_controller_lms
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-target_link_libraries(cloud_controller_hokuyo
  ${catkin_LIBRARIES}
 #  ${PCL_LIBRARIES}
 )
