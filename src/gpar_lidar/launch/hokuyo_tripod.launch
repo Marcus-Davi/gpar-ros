@@ -8,8 +8,10 @@
    <!-- Frame = k64f_imu -->
   <node pkg="gpar_k64f" type="gpar_k64f_node" name="imu_k64f_node" output="screen" >
    <param name="k64f_frame" type="string" value="map"/>
-   <param name="k64f_child_frame" type="string" value="cloud"/>
+   <param name="k64f_child_frame" type="string" value="tripe"/>
    </node>
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="static_ldmrs_imu_link" args="0 0 0 0 1.57 0 tripe ldmrs_mount_link" />
 
 
    <node pkg="gpar_lidar" type="hokuyo_cloud" name="hokuyo_cloud" output="screen" >
