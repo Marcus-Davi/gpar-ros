@@ -2,7 +2,7 @@
 <launch>
 
 <node pkg="gpar_mcuserial" type="mcuserial_node" name="mcuserial_node" >
-   <param name="serial_port" type="string" value="/dev/ttyACM0"/>
+   <param name="serial_port" type="string" value="/dev/ttyACM1"/>
    </node>
 
    <!-- Frame = k64f_imu -->
@@ -11,7 +11,9 @@
    <param name="k64f_child_frame" type="string" value="tripe"/>
    </node>
 
-   <node pkg="urg_node" type="urg_node" name="urg_node" output="screen" />
+   <node pkg="urg_node" type="urg_node" name="urg_node" output="screen" >
+	   <param name="serial_port" type="string" value="/dev/ttyACM0" />
+   </node>
 
 
   <node pkg="tf2_ros" type="static_transform_publisher" name="static_ldmrs_imu_link" args="0.075 0 0 0 0 0 tripe ldmrs_mount_link" />
