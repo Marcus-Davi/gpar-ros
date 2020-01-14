@@ -8,7 +8,7 @@
    <!-- Frame = k64f_imu -->
   <node pkg="gpar_k64f" type="gpar_k64f_node" name="imu_k64f_node" output="screen" >
    <param name="k64f_frame" type="string" value="map"/>
-   <param name="k64f_child_frame" type="string" value="tripe"/>
+   <param name="k64f_child_frame" type="string" value="cloud"/>
    </node>
 
 
@@ -23,7 +23,7 @@
    </node>
 
 
-  <node name="cloud_controller" pkg="gpar_lidar" type="cloud_controller" output="screen">
+  <node name="cloud_controller" pkg="gpar_lidar" type="cloud_controller_lms" output="screen">
     <param name="input_cloud" type="str" value="cloud" />
    </node>
 
