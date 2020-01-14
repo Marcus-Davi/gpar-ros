@@ -55,6 +55,8 @@
 using namespace std;
 ofstream myfile;
 
+std::vector<int> n_points_list;
+
 void ResolveDir();
 
 typedef sick_ldmrs_msgs::SICK_LDMRS_Point PointT;
@@ -80,7 +82,7 @@ std::string str_time = std::to_string(time.sec);
 std::string str = str_path + str_time + ".txt";
 std::string str_pcd = str_path + str_time + ".pcd";
 
-myfile.open(str); 
+myfile.open(str);
 //ROS_INFO("file n = %s",str.c_str());
 
 for (size_t i = 0; i < pc->points.size(); i++) {
@@ -190,7 +192,7 @@ int main(int argc, char **argv)
 
   if(!private_nh.getParam("input_cloud",input_cloud_node))
    {
-    ROS_FATAL("Need to set input node to subscribe to!"); 
+    ROS_FATAL("Need to set input node to subscribe to!");
     return 1;
    }
 
@@ -228,6 +230,3 @@ if(stat(pontos_path.c_str(),&statbuff) == -1) {
 	}
 
 }
-
-
-
