@@ -35,9 +35,19 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <laser_geometry/laser_geometry.h>
+#include <pcl_conversions/pcl_conversions.h>
 
+laser_geometry::LaserProjection projector;
+ros::Publisher pub;
 void laser_callback(const sensor_msgs::LaserScan::ConstPtr& scan_in){
-  ROS_INFO("Got scan");
+
+sensor_msgs::PointCloud2 cloud;
+projector.projectLaser(*scan_in,cloud);
+
+
+cloud.header.frame_id = "cloud";
+cloud.header.stamp = ros::Time::now();
+pub.publish(cloud);
 
 
 }
@@ -65,7 +75,7 @@ int main(int argc, char **argv)
    }
 
    ros::Subscriber sub = nh.subscribe(scan_topic_name,10,laser_callback);
-   ros::Publisher pub = nh.advertise<sensor_msgs::PointCloud2>(output_cloud_name, 10);
+    pub  = nh.advertise<sensor_msgs::PointCloud2>(output_cloud_name, 10);
 
 
   ros::spin();

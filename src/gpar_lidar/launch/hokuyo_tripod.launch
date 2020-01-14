@@ -23,12 +23,8 @@
    </node>
 
 
-  <node pkg="tf2_ros" type="static_transform_publisher" name="static_ldmrs_imu_link" args="0.075 0 0 0 0 0 tripe ldmrs_mount_link" />
-  <node pkg="tf2_ros" type="static_transform_publisher" name="static_ldmrs_link" args="0.044 0.02325 0 0 0 0 ldmrs_mount_link ldmrs" />
-
-
   <node name="cloud_controller" pkg="gpar_lidar" type="cloud_controller" output="screen">
-    <param name="input_cloud" type="str" value="cloud_ldmrs" />
+    <param name="input_cloud" type="str" value="cloud" />
    </node>
 
       <node name="rviz" pkg="rviz" type="rviz" required="true"
