@@ -11,7 +11,7 @@
    <param name="k64f_child_frame" type="string" value="tripe"/>
    </node>
 
-  <node pkg="tf2_ros" type="static_transform_publisher" name="static_ldmrs_imu_link" args="0 0 0 0 1.57 0 tripe ldmrs_mount_link" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="static_ldmrs_imu_link" args="0 0 0 0 0 -1.57 tripe cloud" />
 
 
    <node pkg="gpar_lidar" type="hokuyo_cloud" name="hokuyo_cloud" output="screen" >
