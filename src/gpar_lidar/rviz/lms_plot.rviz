@@ -69,7 +69,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 245
+      Max Intensity: 254
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: PointCloud2
@@ -87,8 +87,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 3.350855827331543
-        Min Value: -0.12726855278015137
+        Max Value: 9.87627124786377
+        Min Value: 0.03292417526245117
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -133,12 +133,11 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        imu:
-          cloud:
-            {}
+        map:
           tripe:
-            map:
-              {}
+            cloud:
+              imu:
+                {}
       Update Interval: 0
       Value: true
   Enabled: true
@@ -169,7 +168,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 3.809885263442993
+      Distance: 10.883665084838867
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -184,10 +183,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4253985285758972
+      Pitch: 0.36039865016937256
       Target Frame: drone
       Value: ThirdPersonFollower (rviz)
-      Yaw: 2.1916964054107666
+      Yaw: 2.64169979095459
     Saved: ~
 Window Geometry:
   Displays:

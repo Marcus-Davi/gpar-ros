@@ -18,7 +18,7 @@
 
   <!-- start the actual driver node -->
   <node name="sick_ldmrs_node" pkg="sick_ldmrs_driver" type="sick_ldmrs_node" output="screen">
-    <param name="hostname" type="str" value="192.168.0.2" />
+    <param name="hostname" type="str" value="192.168.0.3" />
     <!-- change frequency to 12.5 Hz so that the scanner outputs object tracking results -->
     <param name="scan_frequency" type="int" value="0" /> 
   <!--  <param name="angular_resolution_type" type="int" value="1" />  
