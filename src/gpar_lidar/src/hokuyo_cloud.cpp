@@ -39,10 +39,59 @@
 
 laser_geometry::LaserProjection projector;
 ros::Publisher pub;
-void laser_callback(const sensor_msgs::LaserScan::ConstPtr& scan_in){
 
-sensor_msgs::PointCloud2 cloud;
-projector.projectLaser(*scan_in,cloud);
+double angle = 0;
+
+
+void laser_callback(const sensor_msgs::LaserScan::ConstPtr& scan_in){
+static sensor_msgs::PointCloud2 cloud;
+static sensor_msgs::LaserScan scan_out;
+double angle_abs = fabs(angle);
+
+//Filtrar angulo
+if(angle != 0){
+  double start_angle = scan_in->angle_min;
+  double current_angle = scan_in->angle_min;
+  scan_out.angle_increment = scan_in->angle_increment;
+  scan_out.ranges.resize(scan_in->ranges.size());
+  ros::Time start_time = scan_in->header.stamp;
+unsigned int count = 0;
+//Varre toda a entrada
+  for(unsigned int i=0;i < scan_in->ranges.size(); ++i){
+    if(start_angle < -angle_abs){
+      start_angle += scan_in->angle_increment;
+      current_angle += scan_in->angle_increment;
+      start_time += ros::Duration(scan_in->time_increment);
+    } else {
+      scan_out.ranges[count] = scan_in->ranges[i];
+
+
+
+    count++;
+
+    if(current_angle + scan_in->angle_increment > angle_abs)
+    break;
+
+    current_angle += scan_in->angle_increment;
+    }
+  }
+
+  scan_out.header.frame_id = scan_in->header.frame_id;
+  scan_out.header.stamp = start_time;
+  scan_out.angle_min = -angle_abs;
+  scan_out.angle_max = angle_abs;
+  scan_out.angle_increment = scan_in->angle_increment;
+  scan_out.time_increment = scan_in->time_increment;
+  scan_out.scan_time = scan_in->scan_time;
+  scan_out.range_min = scan_in->range_min;
+  scan_out.range_max = scan_in->range_max;
+  projector.projectLaser(scan_out,cloud);
+
+} else {
+  projector.projectLaser(*scan_in,cloud);
+}
+
+
 
 
 cloud.header.frame_id = "cloud";
@@ -58,10 +107,14 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
 
-  laser_geometry::LaserProjection projector_;
-
   std::string output_cloud_name;
   std::string scan_topic_name;
+
+  if(!private_nh.getParam("angle_bound",angle))
+   {
+     angle = 0;
+     ROS_WARN("Need to set parameter 'angle_bound' ");
+   }
 
   if(!private_nh.getParam("scan_topic",scan_topic_name))
    {

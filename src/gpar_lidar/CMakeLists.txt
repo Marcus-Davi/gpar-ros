@@ -172,6 +172,7 @@ add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
 add_executable(slider_node src/slider_node.cpp)
 add_executable(slider_node_v2 src/slider_node_v2.cpp)
 add_executable(hokuyo_cloud src/hokuyo_cloud.cpp)
+add_executable(bulk_scan src/bulk_scan.cpp)
 
 target_link_libraries(cloud_controller
  ${catkin_LIBRARIES}
@@ -192,6 +193,11 @@ target_link_libraries(cloud_controller_lms
 )
 
 target_link_libraries(hokuyo_cloud
+ ${catkin_LIBRARIES}
+#  ${PCL_LIBRARIES}
+)
+
+target_link_libraries(bulk_scan
  ${catkin_LIBRARIES}
 #  ${PCL_LIBRARIES}
 )
