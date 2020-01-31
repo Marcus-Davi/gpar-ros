@@ -170,9 +170,9 @@ include_directories(
 add_executable(cloud_controller src/cloud_controller.cpp)
 add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
 add_executable(slider_node src/slider_node.cpp)
-add_executable(slider_node_v2 src/slider_node_v2.cpp)
 add_executable(hokuyo_cloud src/hokuyo_cloud.cpp)
 add_executable(bulk_scan src/bulk_scan.cpp)
+add_executable(maptocloud src/maptocloud.cpp)
 
 target_link_libraries(cloud_controller
  ${catkin_LIBRARIES}
@@ -180,10 +180,6 @@ target_link_libraries(cloud_controller
 )
 
 target_link_libraries(slider_node
- ${catkin_LIBRARIES}
-)
-
-target_link_libraries(slider_node_v2
  ${catkin_LIBRARIES}
 )
 
@@ -202,10 +198,15 @@ target_link_libraries(bulk_scan
 #  ${PCL_LIBRARIES}
 )
 
+target_link_libraries(maptocloud
+ ${catkin_LIBRARIES}
+#  ${PCL_LIBRARIES}
+)
+
 add_dependencies(cloud_controller gpar_lidar_gencpp)
-add_dependencies(slider_node gpar_lidar_gencpp)
-add_dependencies(slider_node_v2 gpar_lidar_gencpp)
 add_dependencies(cloud_controller_lms gpar_lidar_gencpp)
+add_dependencies(slider_node gpar_lidar_gencpp)
+
 #############
 ## Install ##
 #############

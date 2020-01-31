@@ -103,7 +103,7 @@ pub.publish(cloud);
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "cloud_controller");
+  ros::init(argc, argv, "hokuyo_cloud");
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
 

@@ -9,7 +9,7 @@
  *
  */
 #include <ros/ros.h>
-
+#include "std_msgs/String.h"
 #include <tf/transform_listener.h>
 #include <tf/message_filter.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -25,25 +25,36 @@
 
 // x (m/s) = y(mm/min) / (60000)
 
-const float Hz = 25; //Hz -> Frequencia do Sensor
-const float Ts = 1/Hz;
-float V_x; // m/s
 
-void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
-{
-static float x = 0;	
+void callback_serial(const std_msgs::String::ConstPtr& msg){
+float x;
+float y;
+char* start;
+//sscanf(msg->data.c_str(),"WPos:%f",&y);
+if(( start = strstr((char*)msg->data.c_str(),"WPos:") ) != NULL){
+sscanf(start,"WPos:%f,%f",&x,&y);
+} else {
+return;
+}
+
+//ROS_INFO("msg : %s",msg->data.c_str());
+
+//ROS_INFO("sub msg : %s",start);
+
+//ROS_INFO("x : %f y : %f",x,y);
+
+
 static tf2_ros::TransformBroadcaster br; //tf Broadcaster
 geometry_msgs::TransformStamped transformStamped;
 
-x = x + V_x*Ts;
 
 transformStamped.header.stamp = ros::Time::now();
 transformStamped.header.frame_id = "link";
 transformStamped.child_frame_id = "map";
 
 
-transformStamped.transform.translation.x = x; //programável
-transformStamped.transform.translation.y = 0;
+transformStamped.transform.translation.x = x/1000; //milimetros -> metros
+transformStamped.transform.translation.y = y/1000;
 transformStamped.transform.translation.z = -3.0; //Altura pro chão
 
 transformStamped.transform.rotation.w  = 1;
@@ -53,6 +64,13 @@ transformStamped.transform.rotation.z  = 0;
 
 
 br.sendTransform(transformStamped); //Always Publish
+}
+
+
+
+void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
+{
+
 
 
 }
@@ -64,15 +82,10 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
 
-  if (!nh_private.getParam("slider_x_vel", V_x))
-  {
-   V_x = 0.01;
-   ROS_WARN("Set a velocidade do slider no .launch... setada para  \"%f\"",V_x);
-  }
-
 	
   // Create a ROS subscriber for the input point cloud
   ros::Subscriber sub = nh.subscribe ("cloud", 1, callback);
+  ros::Subscriber sub_string = nh.subscribe ("mcuserial_node_gcode/serial_data", 1, callback_serial);
 
 
   ros::spin();
