@@ -10,17 +10,15 @@
 
 ros::Publisher pub_;
 
-//static nav_msgs::OccupancyGrid::Ptr map_g = boost::make_shared<nav_msgs::OccupancyGrid>();
-static nav_msgs::OccupancyGrid map_g;
+static nav_msgs::OccupancyGrid::Ptr map_g = boost::make_shared<nav_msgs::OccupancyGrid>();
 static sensor_msgs::PointCloud2::Ptr cloud_msg = boost::make_shared<sensor_msgs::PointCloud2>();
-static pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
 
 
 //Usar message filter!!
-void map_callback(const nav_msgs::OccupancyGrid::ConstPtr& map){
+void map_callback(const nav_msgs::OccupancyGrid::Ptr map){
 //  ROS_INFO("GOT MAP!");
-map_g = *map;
+map_g = map;
 
 }
 
@@ -29,19 +27,20 @@ void save_map_callback(const std_msgs::String::ConstPtr& msg){
   if(msg->data == "save"){
 //ROS_INFO("Saving MAP!");
   //Faz varredura do mapar
-unsigned int  width = map_g.info.width; // largura
-unsigned int  height = map_g.info.height; //altura
-  float resolution = map_g.info.resolution;
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+unsigned int  width = map_g->info.width; // largura
+unsigned int  height = map_g->info.height; //altura
+  float resolution = map_g->info.resolution;
 unsigned int size = width*height;
   float x,y; //Posição da celular
   uint32_t row,column;
-  geometry_msgs::Pose p0 = map_g.info.origin;
+  geometry_msgs::Pose p0 = map_g->info.origin;
 
-  ROS_INFO("frame = %s, cells = %d",map_g.header.frame_id.c_str(),size);
+  ROS_INFO("frame = %s, cells = %d",map_g->header.frame_id.c_str(),size);
 
   unsigned int points = 0;
   for(unsigned int i=0;i<size;++i){
-	if(map_g.data[i] > LOW_LIMIT){ //verifica se ponto eh valido
+	if(map_g->data[i] > LOW_LIMIT){ //verifica se ponto eh valido
 	points++;
 	column = i%height;
 	row = i/width;
@@ -52,11 +51,12 @@ unsigned int size = width*height;
 	y = y + p0.position.y;
 //	ROS_INFO("x = %f, y = %f",x,y);
 	cloud->push_back(pcl::PointXYZ (x,y,0));
-	pcl::io::savePCDFileBinary("/home/projeto/MAPA.pcd",*cloud);
 	  }
   }
   
   if(points){
+	pcl::io::savePCDFileBinary("/home/projeto/MAPA.pcd",*cloud);
+	ROS_INFO("Map Saved! Points = %lu",cloud->points.size());
 	pcl::toROSMsg(*cloud,*cloud_msg);
 	cloud_msg->header.stamp = ros::Time::now();
 	cloud_msg->header.frame_id= "map";
