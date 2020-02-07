@@ -2,16 +2,7 @@
 <launch>
 <arg name="hostname" default="192.168.0.5" />
 
-
-<node pkg="gpar_mcuserial" type="mcuserial_node" name="mcuserial_node" >
-   <param name="serial_port" type="string" value="/dev/ttyACM0"/>
-   </node>
-
-  <node pkg="gpar_k64f" type="gpar_k64f_node" name="imu_k64f_node" output="screen" >
-	<param name="k64f_frame" type="string" value ="map" />
-  </node>
-
- 
+ <node pkg="tf2_ros" type="static_transform_publisher" name="static_map_cloud" args="0 0 0 0 0 0 cloud map" />  
   <!-- start the actual driver node -->
   
 <!-- launch file for the lms_5xx series -->

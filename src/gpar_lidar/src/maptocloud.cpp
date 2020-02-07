@@ -53,7 +53,7 @@ unsigned int size = width*height;
 	cloud->push_back(pcl::PointXYZ (x,y,0));
 	  }
   }
-  
+
   if(points){
 	pcl::io::savePCDFileBinary("/home/projeto/MAPA.pcd",*cloud);
 	ROS_INFO("Map Saved! Points = %lu",cloud->points.size());
@@ -94,8 +94,9 @@ int main(int argc, char **argv)
    * NodeHandle destructed will close down the node.
    */
   ros::NodeHandle n;
+  ros::NodeHandle nh("~");
 
-  if (n.getParam("map_topic",map_topic))
+  if (nh.getParam("map_topic",map_topic))
   ROS_INFO("parametro 'serial_port' lido com sucesso : %s",map_topic.c_str());
    else {
   ROS_INFO("parametro 'serial_port' n existe! setado : %s",map_topic.c_str());

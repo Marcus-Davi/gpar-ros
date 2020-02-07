@@ -133,7 +133,7 @@ double dz = zn-z0;
 
 double dist = sqrtf(dx*dx + dy*dy + dz*dz);
 
-ROS_INFO("max distance = %f !",dist);
+//ROS_INFO("max distance = %f !",dist);
 if(!StartAggregation)
 return;
 

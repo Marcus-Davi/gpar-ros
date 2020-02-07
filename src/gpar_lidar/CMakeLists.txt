@@ -173,6 +173,7 @@ add_executable(slider_node src/slider_node.cpp)
 add_executable(hokuyo_cloud src/hokuyo_cloud.cpp)
 add_executable(bulk_scan src/bulk_scan.cpp)
 add_executable(maptocloud src/maptocloud.cpp)
+add_executable(cloudtofile src/cloudtofile.cpp)
 
 target_link_libraries(cloud_controller
  ${catkin_LIBRARIES}
@@ -199,6 +200,11 @@ target_link_libraries(bulk_scan
 )
 
 target_link_libraries(maptocloud
+ ${catkin_LIBRARIES}
+#  ${PCL_LIBRARIES}
+)
+
+target_link_libraries(cloudtofile
  ${catkin_LIBRARIES}
 #  ${PCL_LIBRARIES}
 )
