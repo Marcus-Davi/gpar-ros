@@ -53,8 +53,20 @@ int main(int argc, char **argv)
    * You must call one of the versions of ros::init() before using any other
    * part of the ROS system.
    */
+
+	if (argc < 2 ) {
+
+		std::cerr << "Uso: insira o tópico para captura de nuvem de pontos!" << argv[0] << std::endl;
+
+		return 1;
+	} 
+
+
+
+  std::string cloud_topic = argv[1];
   ros::init(argc, argv, "pc_save_file");
-  std::string cloud_topic = "cloud";
+
+
   bool has_color = false;
 
 
@@ -66,12 +78,6 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   ros::NodeHandle nh("~");
 
-
-  if (nh.getParam("sub_topic",cloud_topic))
-  ROS_INFO("parametro 'sub_topic' lido com sucesso : %s",cloud_topic.c_str());
-   else {
-  ROS_WARN("parametro 'sub_topic' n existe! setado : %s",cloud_topic.c_str());
-  }
 
 
   ros::Subscriber sub_command = n.subscribe("save_cloud",100,save_map_callback);
