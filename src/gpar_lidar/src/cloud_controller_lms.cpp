@@ -33,12 +33,14 @@
  */
 
 #include <ros/ros.h>
+#include <std_msgs/UInt16.h>
 
 #include <tf/transform_listener.h>
 #include <tf/message_filter.h>
 #include <message_filters/subscriber.h>
 
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl/io/ply_io.h>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl/point_cloud.h>
@@ -52,20 +54,22 @@
 #include <sys/stat.h>
 #include <ctime>
 using namespace std;
+
+std::vector<int> n_pts_list; //lista de numero de pontos por pacote
+
 ofstream myfile;
 
 void ResolveDir();
 
-
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudT;
-
 ros::Publisher pub_;
+ros::Publisher pub_npoints;
 
 tf::TransformListener* tf_;
 std::string fixed_frame_;
 PointCloudT::Ptr cloud_lower_ = boost::make_shared<PointCloudT>();
 
-void savePoints(PointCloudT::Ptr pc){
+void savePoints(const PointCloudT::ConstPtr& pc){
  ros::Time time = ros::Time::now();
 
  std::time_t std_time;
@@ -80,18 +84,24 @@ std::string str_time = std::to_string(time.sec);
 std::string str = str_path + str_time + ".txt";
 std::string str_pcd = str_path + str_time + ".pcd";
 
-myfile.open(str); 
+myfile.open(str);
 //ROS_INFO("file n = %s",str.c_str());
-
+int j = 0;
+int i_up_to = n_pts_list[j];
 for (size_t i = 0; i < pc->points.size(); i++) {
-       myfile << pc->points[i].x << " " << pc->points[i].y << " " <<pc->points[i].z << endl;
-//ROS_INFO("%f",pc->points[i].x);
+  if (i < i_up_to)
+       myfile << pc->points[i].x << " " << pc->points[i].y << " " <<pc->points[i].z << " " << j << endl;
+       else{
+       j++;
+       i_up_to += n_pts_list[j];
+     }
   }
 myfile.close();
-//if(pc->points.size() > 0)
-//	pcl::io::savePCDFileASCII (str_pcd, *pc); //EXPERIMENTAL
-ROS_INFO("%lu Pontos salvos em %s !\n",pc->points.size(),str.c_str());
+if(pc->points.size() > 0)
+	pcl::io::savePCDFileBinary(str_pcd, *pc); //Mais Eficiente ?
 
+ROS_INFO("%lu Pontos salvos em %s !\n",pc->points.size(),str.c_str());
+n_pts_list.clear(); //verificar se ja foi 'cleared' ? TODO
 
 }
 
@@ -101,12 +111,34 @@ bool StartAggregation = false;
 
 void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
 {
+  static std_msgs::UInt16 npts_msg;
+
+  static PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
+  pcl::fromROSMsg(*pc, *cloud);
+
+int current_cloud_size = cloud->size();
+npts_msg.data = current_cloud_size;
+pub_npoints.publish(npts_msg);
+double x0 = cloud->points[0].x;
+double y0 = cloud->points[0].y;
+double z0 = cloud->points[0].z;
+
+double xn = cloud->points[current_cloud_size-1].x;
+double yn = cloud->points[current_cloud_size-1].y;
+double zn = cloud->points[current_cloud_size-1].z;
+
+double dx = xn-x0;
+double dy = yn-y0;
+double dz = zn-z0;
+
+double dist = sqrtf(dx*dx + dy*dy + dz*dz);
+
+//ROS_INFO("max distance = %f !",dist);
 if(!StartAggregation)
 return;
 
 
-  PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
-  pcl::fromROSMsg(*pc, *cloud);
+
   // ----- transform to fixed frame
   try
   {
@@ -126,6 +158,10 @@ return;
   }
 
   // ----- concatenate lower + upper clouds
+
+
+  n_pts_list.push_back(current_cloud_size);
+
   *cloud_lower_ += *cloud;
 
 
@@ -135,6 +171,9 @@ return;
   msg->header.stamp = pc->header.stamp;
   msg->header.frame_id = fixed_frame_;
   pub_.publish(msg);
+
+
+
 }
 
 //ler inteiro
@@ -190,7 +229,7 @@ int main(int argc, char **argv)
 
   if(!private_nh.getParam("input_cloud",input_cloud_node))
    {
-    ROS_FATAL("Need to set input node to subscribe to!"); 
+    ROS_FATAL("Need to set input node to subscribe to!");
     return 1;
    }
 
@@ -208,6 +247,7 @@ int main(int argc, char **argv)
   tf_filter->registerCallback(boost::bind(callback, _1));
 
   pub_ = nh.advertise<sensor_msgs::PointCloud2>("map_cloud", 10);
+  pub_npoints = nh.advertise<std_msgs::UInt16>("laser_detected_points",10);
 
   ros::spin();
 
@@ -228,6 +268,3 @@ if(stat(pontos_path.c_str(),&statbuff) == -1) {
 	}
 
 }
-
-
-

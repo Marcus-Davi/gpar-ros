@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <launch>
 <arg name="hostname" default="192.168.0.5" />
-
- <node pkg="tf2_ros" type="static_transform_publisher" name="static_map_cloud" args="0 0 0 0 0 0 cloud map" />  
-  <!-- start the actual driver node -->
   
+  <node pkg="tf2_ros" type="static_transform_publisher" name="static_ldmrs_imu_link" args="0 0 2 0 1.57 0 map cloud" />
+
+
 <!-- launch file for the lms_5xx series -->
   <node name="sick_lms_5xx" pkg="sick_scan" type="sick_generic_caller"  respawn="false" output="screen">
   <!--<param name="robot_description" command="$(find xacro)/xacro.py '$(find sick_scan)/urdf/example.urdf.xacro'" />-->
@@ -45,18 +45,12 @@
 --> 
 
   </node>
-
-  <node name="cloud_controller_lms" pkg="gpar_lidar" type="cloud_controller_lms" output="screen">
-    <param name="input_cloud" type="str" value="cloud" />
-   </node>
+	<node pkg="gpar_lidar" type="bulk_scan" name="bulk_scan" output="screen" >
+	<param name="input_cloud" type="string" value="cloud" />
+	</node>
 
       <node name="rviz" pkg="rviz" type="rviz" required="true"
-      args="-d $(find gpar_lidar)/rviz/lms_plot.rviz" />
-
-<!--
- <node pkg="rosbag" type="record" name="rosbag_record_scan"
-	 args="-o /home/marcus/drone_scan /cloud /tf /tf_static" />
--->
-
+      args="-d $(find gpar_lidar)/rviz/hokuyo_bulk.rviz" /> 
 
 </launch>
+
