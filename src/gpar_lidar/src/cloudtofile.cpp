@@ -30,7 +30,8 @@ void save_map_callback(const std_msgs::String::ConstPtr& msg){
     //std::string str_time = std::string(time_date);
     std::string str_time = std::to_string(time.sec);
     std::string str_pcd = str_path + str_time + ".pcd";
-    pcl::io::savePCDFileBinary(str_pcd,*cloud);
+    // pcl::io::savePCDFileBinary(str_pcd,*cloud);
+    pcl::io::savePCDFileASCII(str_pcd,*cloud);
     ROS_INFO("PCD Saved!");
 }
 
@@ -67,10 +68,10 @@ int main(int argc, char **argv)
   ros::NodeHandle nh("~");
 
 
-  if (nh.getParam("sub_topic",cloud_topic))
-  ROS_INFO("parametro 'sub_topic' lido com sucesso : %s",cloud_topic.c_str());
+  if (nh.getParam("cloud_topic",cloud_topic))
+  ROS_INFO("parametro 'cloud_topic' lido com sucesso : %s",cloud_topic.c_str());
    else {
-  ROS_WARN("parametro 'sub_topic' n existe! setado : %s",cloud_topic.c_str());
+  ROS_WARN("parametro 'cloud_topic' n existe! setado : %s",cloud_topic.c_str());
   }
 
 

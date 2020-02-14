@@ -174,6 +174,8 @@ add_executable(hokuyo_cloud src/hokuyo_cloud.cpp)
 add_executable(bulk_scan src/bulk_scan.cpp)
 add_executable(maptocloud src/maptocloud.cpp)
 add_executable(cloudtofile src/cloudtofile.cpp)
+add_executable(cloud_controller_color src/cloud_controller_color.cpp)
+
 
 target_link_libraries(cloud_controller
  ${catkin_LIBRARIES}
@@ -205,6 +207,11 @@ target_link_libraries(maptocloud
 )
 
 target_link_libraries(cloudtofile
+ ${catkin_LIBRARIES}
+#  ${PCL_LIBRARIES}
+)
+
+target_link_libraries(cloud_controller_color
  ${catkin_LIBRARIES}
 #  ${PCL_LIBRARIES}
 )

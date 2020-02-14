@@ -39,9 +39,9 @@
 #include <sensor_msgs/Image.h>
 #include <pcl/point_cloud.h>
 
-typedef PointCloudT pcl::PointXYZRGB;
+typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudT;
 
-sensor_msgs::Image image_msg;
+//sensor_msgs::Image image_msg;
 sensor_msgs::PointCloud2 pc_msg;
 
 
@@ -49,19 +49,58 @@ ros::Subscriber sub_pc;
 ros::Subscriber sub_img;
 ros::Publisher pub_pc;
 
-sensor_msgs::PointCloud2::Ptr cloud = boost::make_shared<sensor_msgs::PointCloud2>();
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
 void img_callback(const sensor_msgs::Image::ConstPtr& img_msg){
 ROS_INFO("got IMG");
-PointCloudT::Ptr cloud_color = boost::make_shared<PointCloudT>();
 //Sincronizar msgs
+PointCloudT::Ptr cloud_color = boost::make_shared<PointCloudT>();
+size_t pc_size = cloud->size();
+cloud_color->resize(pc_size);
+
+//Aqui preciso acessar a linha Y da imagem
+// Faz Y = 240
+// Acesso da ROW -> 1920*row. Row(240) = 1920*240.
+// Tamanho da Row = 1920 bytes.
+// Conversão pixel-> ponto
+// HokuyoRES -> 0.36°
+// CameraRES -> 0.0625
+// Conversão -> 5.76! (A cada ponto do lidar, incrementamos ~6*3 pontos camera)
+
+// [RGB] [RGB] ... [RGB]
+// .                 .
+// .                 .    {480
+// .                 .
+// [RGB] [RGB] .. [RGB]
+//      640
+// Como mapear 640 pontos para pc_size ?
+
+
+for (unsigned int i = 0;i<pc_size;++i){
+  cloud_color->points[i].x = cloud->points[i].x;
+  cloud_color->points[i].y = cloud->points[i].y;
+  cloud_color->points[i].z = cloud->points[i].z;
+  //aqui preciso acessar a imagem na linha correta. por algum motivo, os pontos tão invertidos com as cores
+  cloud_color->points[pc_size-i-1].r = img_msg->data[1920*240 + 18*i];
+  cloud_color->points[pc_size-i-1].g = img_msg->data[1920*240 + 18*i+1];
+  cloud_color->points[pc_size-i-1].b = img_msg->data[1920*240 + 18*i+2];
+  // cloud_color->points[i].a = 0.7;
+  //ROS_INFO("size = %d",1920*240 + 6*i);
+}
+
+sensor_msgs::PointCloud2::Ptr msg = boost::make_shared<sensor_msgs::PointCloud2>();
+pcl::toROSMsg(*cloud_color, *msg);
+msg->header.stamp = ros::Time::now();
+msg->header.frame_id = cloud->header.frame_id;
+pub_pc.publish(msg);
+
 
 
 }
 
-void pc_callback(const sensor_msgs::PointCloud2::Ptr pc_msg){
+void pc_callback(const sensor_msgs::PointCloud2::ConstPtr& pc_msg){
 ROS_INFO("got Cloud");
-cloud = pc_msg;
+pcl::fromROSMsg(*pc_msg, *cloud);
 }
 
 
@@ -78,13 +117,13 @@ int main(int argc, char **argv)
   if(!private_nh.getParam("input_cloud",input_cloud_name))
    {
      input_cloud_name = "cloud";
-     ROS_WARN("Need to set parameter 'output_cloud_name'.. set to \"%s\"",input_cloud_name.c_str());
+     ROS_WARN("Need to set parameter 'input_cloud'.. set to \"%s\"",input_cloud_name.c_str());
    }
 
    if(!private_nh.getParam("input_image",input_image))
     {
-      input_image = "image";
-      ROS_FATAL("falout node da image RUIM!");
+      ROS_FATAL("param _input_image n definido!");
+      ROS_WARN("saindo .. ");
       return -1;
     }
 

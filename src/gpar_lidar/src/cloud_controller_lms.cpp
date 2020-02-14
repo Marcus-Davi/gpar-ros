@@ -224,12 +224,12 @@ int main(int argc, char **argv)
   if (!private_nh.getParam("fixed_frame", fixed_frame_))
   {
    fixed_frame_ = "map";
-   ROS_WARN("Need to set parameter fixed_frame.. set to \"%s\"",fixed_frame_.c_str());
+   ROS_WARN("Need to set parameter '_fixed_frame'.. set to \"%s\"",fixed_frame_.c_str());
   }
 
   if(!private_nh.getParam("input_cloud",input_cloud_node))
    {
-    ROS_FATAL("Need to set input node to subscribe to!");
+    ROS_FATAL("Please set '_input_cloud' parameter' !");
     return 1;
    }
 

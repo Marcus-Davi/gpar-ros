@@ -43,7 +43,6 @@
 #include <pcl/io/ply_io.h>
 
 #include <sensor_msgs/PointCloud2.h>
-#include <sick_ldmrs_msgs/sick_ldmrs_point_type.h>
 #include <pcl/point_cloud.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl_ros/transforms.h>
@@ -62,8 +61,7 @@ ofstream myfile;
 
 void ResolveDir();
 
-typedef sick_ldmrs_msgs::SICK_LDMRS_Point PointT;
-typedef pcl::PointCloud<PointT> PointCloudT;
+typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudT;
 ros::Publisher pub_;
 ros::Publisher pub_npoints;
 
@@ -119,6 +117,10 @@ void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
   pcl::fromROSMsg(*pc, *cloud);
 
 int current_cloud_size = cloud->size();
+
+if(cloud->size() == 0)
+return;
+
 npts_msg.data = current_cloud_size;
 pub_npoints.publish(npts_msg);
 double x0 = cloud->points[0].x;
@@ -135,7 +137,7 @@ double dz = zn-z0;
 
 double dist = sqrtf(dx*dx + dy*dy + dz*dz);
 
-ROS_INFO("max distance = %f !",dist);
+//ROS_INFO("max distance = %f !",dist);
 if(!StartAggregation)
 return;
 
