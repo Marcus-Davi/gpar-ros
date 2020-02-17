@@ -1,6 +1,6 @@
 # ignora
-devel_isolated/
-build_isolated/
+/devel_isolated/
+/build_isolated/
 .catkin_workspace
 /src/Onboard-SDK-ROS-3.8/Onboard-SDK-3.8.1/
 /src/Onboard-SDK-ROS-3.8/Onboard-SDK-3.8.1-build/
