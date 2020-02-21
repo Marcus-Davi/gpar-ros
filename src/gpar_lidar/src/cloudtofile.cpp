@@ -54,18 +54,19 @@ int main(int argc, char **argv)
    * part of the ROS system.
    */
 
+
+
+  ros::init(argc, argv, "pc_save_file");
 	if (argc < 2 ) {
 
-		std::cerr << "Uso: insira o tópico para captura de nuvem de pontos!" << argv[0] << std::endl;
-
+		ROS_ERROR("Uso : Insira o topic para captura de nuvem de pontos");
 		return 1;
+		
 	} 
 
 
-
-  std::string cloud_topic = argv[1];
-  ros::init(argc, argv, "pc_save_file");
-
+  	std::string cloud_topic = argv[1];
+	ROS_INFO("inscrito no topico %s",argv[1]);
 
   bool has_color = false;
 
