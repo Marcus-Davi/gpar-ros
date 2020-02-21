@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<launch>
+
+<node pkg="gpar_mcuserial" type="mcuserial_node" name="mcuserial_node" >
+   <param name="serial_port" type="string" value="/dev/ttyACM1"/>
+   </node>
+
+   <!-- Frame = k64f_imu -->
+  <node pkg="gpar_k64f" type="gpar_k64f_node" name="imu_k64f_node" output="screen" >
+   <param name="k64f_frame" type="string" value="map"/>
+   <param name="k64f_child_frame" type="string" value="cloud"/>
+   </node>
+
+
+
+  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+    <param name="video_device" value="/dev/video0" />
+    <param name="image_width" value="640" />
+    <param name="image_height" value="480" />
+    <param name="pixel_format" value="yuyv" />
+    <param name="camera_frame_id" value="usb_cam" />
+    <param name="io_method" value="mmap"/>
+  </node>
+
+
+  <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+    <remap from="image" to="/usb_cam/image_raw"/>
+    <param name="autosize" value="true" />
+  </node>
+
+<node pkg="urg_node" type="urg_node" name="urg_node" output="screen" />
+
+   <node pkg="gpar_lidar" type="hokuyo_cloud" name="hokuyo_cloud" output="screen" >
+   <param name="angle_bound" type="double" value="0.349066" />
+   <param name="scan_topic" type="string" value="scan" />
+   <param name="input_cloud" type="string" value="cloud" />
+   </node>
+
+   <node pkg="gpar_camera" type="laser_camera" name="laser_camera" >
+	   <param name="input_image" value="/usb_cam/image_raw" />
+   </node>
+
+      <node name="rviz" pkg="rviz" type="rviz" required="true"
+      args="-d $(find gpar_lidar)/rviz/hokuyo_cam.rviz" /> 
+ 
+</launch>
+
+              

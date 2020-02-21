@@ -30,7 +30,8 @@ void save_map_callback(const std_msgs::String::ConstPtr& msg){
     //std::string str_time = std::string(time_date);
     std::string str_time = std::to_string(time.sec);
     std::string str_pcd = str_path + str_time + ".pcd";
-    pcl::io::savePCDFileBinary(str_pcd,*cloud);
+    // pcl::io::savePCDFileBinary(str_pcd,*cloud);
+    pcl::io::savePCDFileASCII(str_pcd,*cloud);
     ROS_INFO("PCD Saved!");
 }
 
@@ -78,7 +79,6 @@ int main(int argc, char **argv)
    */
   ros::NodeHandle n;
   ros::NodeHandle nh("~");
-
 
 
   ros::Subscriber sub_command = n.subscribe("save_cloud",100,save_map_callback);

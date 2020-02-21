@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(gpar_lidar)
+project(gpar_camera)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -66,11 +66,6 @@ find_package(catkin REQUIRED COMPONENTS
 #   Service2.srv
 # )
 
-add_service_files(
- FILES
- Command.srv
-)
-
 ## Generate actions in the 'action' folder
 # add_action_files(
 #   FILES
@@ -81,13 +76,8 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
-
- generate_messages(
-   DEPENDENCIES
-   std_msgs
-)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -120,8 +110,8 @@ add_service_files(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES gpar_lidar
-#  CATKIN_DEPENDS roscpp std_msgs
+#  LIBRARIES gpar_camera
+#  CATKIN_DEPENDS roscpp rospy
 #  DEPENDS system_lib
 )
 
@@ -138,7 +128,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/gpar_lidar.cpp
+#   src/${PROJECT_NAME}/gpar_camera.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -149,8 +139,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/gpar_lidar_node.cpp)
-
+# add_executable(${PROJECT_NAME}_node src/gpar_camera_node.cpp)
+add_executable(laser_camera src/laser_camera.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -167,58 +157,9 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
-add_executable(cloud_controller src/cloud_controller.cpp)
-add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
-add_executable(slider_node src/slider_node.cpp)
-add_executable(hokuyo_cloud src/hokuyo_cloud.cpp)
-add_executable(bulk_scan src/bulk_scan.cpp)
-add_executable(maptocloud src/maptocloud.cpp)
-add_executable(cloudtofile src/cloudtofile.cpp)
-add_executable(cloud_controller_color src/cloud_controller_color.cpp)
-
-
-target_link_libraries(cloud_controller
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(slider_node
- ${catkin_LIBRARIES}
-)
-
-target_link_libraries(cloud_controller_lms
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(hokuyo_cloud
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(bulk_scan
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(maptocloud
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(cloudtofile
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(cloud_controller_color
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-add_dependencies(cloud_controller gpar_lidar_gencpp)
-add_dependencies(cloud_controller_lms gpar_lidar_gencpp)
-add_dependencies(slider_node gpar_lidar_gencpp)
+ target_link_libraries(laser_camera
+   ${catkin_LIBRARIES}
+ )
 
 #############
 ## Install ##
@@ -267,7 +208,7 @@ add_dependencies(slider_node gpar_lidar_gencpp)
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_gpar_lidar.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_gpar_camera.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

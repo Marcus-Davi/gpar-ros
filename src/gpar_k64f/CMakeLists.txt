@@ -136,7 +136,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/imu_k64f_node.cpp)
-add_executable(gpar_k64f_node src/gpar_k64f_node.cpp)
+add_executable(k64f_fusion src/k64f_fusion.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -154,7 +154,7 @@ add_executable(gpar_k64f_node src/gpar_k64f_node.cpp)
 #   ${catkin_LIBRARIES}
 # )
 
- target_link_libraries(${PROJECT_NAME}_node
+ target_link_libraries(k64f_fusion
    ${catkin_LIBRARIES}
  )
 
