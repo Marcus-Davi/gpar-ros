@@ -2,10 +2,11 @@
 from __future__ import print_function
 
 import roslib
-roslib.load_manifest('test')
+roslib.load_manifest('gpar_camera')
 import sys
 import rospy
 import cv2
+import time
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
@@ -39,8 +40,8 @@ class image_converter:
       print(e)
 
 def main(args):
-  ic = image_converter()
   rospy.init_node('image_converter', anonymous=True)
+  ic = image_converter()
   try:
     rospy.spin()
   except KeyboardInterrupt:
