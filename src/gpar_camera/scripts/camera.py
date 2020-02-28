@@ -2,7 +2,7 @@
 from __future__ import print_function
 
 import roslib
-roslib.load_manifest('test')
+roslib.load_manifest('gpar_camera')
 import sys
 import rospy
 import cv2
