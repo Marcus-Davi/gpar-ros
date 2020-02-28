@@ -121,7 +121,7 @@ catkin_package(
 
 link_directories(${KALMANLIBDIR}/build) #kalman
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${KALMANLIBDIR}/include
