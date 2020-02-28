@@ -12,6 +12,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 )
 
+find_package(Eigen3 REQUIRED NO_MODULE)
+
+set(KALMANLIBDIR /home/projeto/Workspace/Coding/C++/Cpp-Kalman/)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -114,9 +118,13 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
+
+link_directories(${KALMANLIBDIR}/build) #kalman
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+  ${KALMANLIBDIR}/include
 )
 
 ## Declare a C++ library
@@ -152,6 +160,7 @@ add_executable(kalman_node src/kalman_test.cpp)
 
  target_link_libraries(kalman_node
    ${catkin_LIBRARIES}
+   KalmanLIB
  )
 
 #############
