@@ -27,42 +27,49 @@
 
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include <geometry_msgs/QuaternionStamped.h>
+#include "geometry_msgs/Vector3.h"
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf/tf.h>
 
-std::string child_frame;
-std::string frame;
+ros::Publisher pub_a;
+ros::Publisher pub_g;
+ros::Publisher pub_m;
+
+#define ACC_CONVERSION (0.488e-3 * 9.80665)
+#define MAG_CONVERSION (0.1f)
+#define GYR_CONVERSION (15.625e-3 * M_PI/180.0)
 
 
 void serial_callback(const std_msgs::String::ConstPtr& msg){
-static geometry_msgs::Quaternion attitude; //quaternion
-//Transform data
-static tf2_ros::TransformBroadcaster br; //tf Broadcaster
+int ax,ay,az;
+int gx,gy,gz;
+int mx,my,mz;
 
-geometry_msgs::TransformStamped transformStamped;
-transformStamped.header.stamp = ros::Time::now();
-transformStamped.header.frame_id = frame; //"map" ou "odom"
-transformStamped.child_frame_id = child_frame; //"cloud" ou "imu"
+geometry_msgs::Vector3 acc,mag,gyr;
 
-transformStamped.transform.translation.x = 0;
-transformStamped.transform.translation.y = 0;
-transformStamped.transform.translation.z = 0; 
+// TODO tem forma melhor ?
+sscanf(msg->data.c_str(),"%d %d %d %d %d %d %d %d %d",
+  &ax,&ay,&az,
+  &gx,&gy,&gz,
+  &mx,&my,&mz);
+
+acc.x = ax * ACC_CONVERSION;
+acc.y = ay * ACC_CONVERSION;
+acc.z = az * ACC_CONVERSION;
+
+gyr.x = gx * GYR_CONVERSION;
+gyr.y = gy * GYR_CONVERSION;
+gyr.z = gz * GYR_CONVERSION;
+
+mag.x = mx * MAG_CONVERSION;
+mag.y = my * MAG_CONVERSION;
+mag.z = mz * MAG_CONVERSION;
+
+pub_a.publish(acc);
+pub_g.publish(gyr);
+pub_m.publish(mag);
 
 
-	float q0,q1,q2,q3;
-	sscanf(msg->data.c_str(),"%f %f %f %f",&q0,&q1,&q2,&q3);
-float norm = sqrt(q0*q0+q1*q1+q2*q2+q3*q3);
-
-attitude.w = q0/norm;
-attitude.x = q1/norm;
-attitude.y = q2/norm;
-attitude.z = q3/norm;
-
-
-transformStamped.transform.rotation=attitude;
-
-br.sendTransform(transformStamped);
 
 }
 /**
@@ -70,6 +77,7 @@ br.sendTransform(transformStamped);
  */
 int main(int argc, char **argv)
 {
+  
   /**
    * The ros::init() function needs to see argc and argv so that it can perform
    * any ROS arguments and name remapping that were provided at the command line.
@@ -81,7 +89,7 @@ int main(int argc, char **argv)
    * part of the ROS system.
    */
 
-  ros::init(argc, argv, "gpar_k64f_fusion");
+  ros::init(argc, argv, "gpar_k64f_imu");
 
   /**
    * NodeHandle is the main access point to communications with the ROS system.
@@ -91,24 +99,10 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n("~");
 
-  if ( n.getParam("k64f_child_frame",child_frame) )
-{}
-   else{
-	ROS_INFO("k64f_child_frame NOT SET");
-	child_frame = "k64f_frame_child";
-	}
-
-  if ( n.getParam("k64f_frame",frame) )
-{}
-   else{
-	ROS_INFO("k64f_frame NOT SET");
-	frame = "k64f_frame";
-	}
-
-	ROS_INFO("k64f_frame : %s",frame.c_str());
-	ROS_INFO("k64f_child_frame : %s",child_frame.c_str());
-
   ros::Subscriber sub = n.subscribe("/mcuserial_node/serial_data", 1000, serial_callback);
+  pub_a = n.advertise<geometry_msgs::Vector3>("accelerations",10);
+  pub_g = n.advertise<geometry_msgs::Vector3>("angular_vels",10);
+  pub_m = n.advertise<geometry_msgs::Vector3>("magnetic_field",10);
 
 
 	ros::spin();

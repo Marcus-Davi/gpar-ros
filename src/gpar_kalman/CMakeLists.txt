@@ -10,11 +10,12 @@ project(gpar_kalman)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  tf2_ros
 )
 
 find_package(Eigen3 REQUIRED NO_MODULE)
 
-set(KALMANLIBDIR /home/projeto/Workspace/Coding/C++/Cpp-Kalman/)
+set(KALMANLIBDIR /home/marcus/Workspace/Coding/C++/Cpp-Kalman/)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)

@@ -137,6 +137,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/imu_k64f_node.cpp)
 add_executable(k64f_fusion src/k64f_fusion.cpp)
+add_executable(k64f_imu src/k64f_imu.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -155,6 +156,10 @@ add_executable(k64f_fusion src/k64f_fusion.cpp)
 # )
 
  target_link_libraries(k64f_fusion
+   ${catkin_LIBRARIES}
+ )
+
+ target_link_libraries(k64f_imu
    ${catkin_LIBRARIES}
  )
 
