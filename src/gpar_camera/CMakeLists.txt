@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf2
   tf2_ros
-  sick_ldmrs_msgs
   laser_geometry
   pcl_conversions
   pcl_ros

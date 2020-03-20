@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Eigen3 REQUIRED NO_MODULE)
 
-set(KALMANLIBDIR /home/marcus/Workspace/Coding/C++/Cpp-Kalman/)
+set(KALMANLIBDIR /home/projeto/Workspace/Coding/C++/Cpp-Kalman/) #ALTERE DE ACORDO!!!!
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
