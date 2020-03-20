@@ -9,8 +9,6 @@
 #include "gpar_kalman/ModelFunctions.h"
 
 
-
-
 geometry_msgs::Vector3 acc,mag,gyr;
 bool got_acc = false;
 bool got_gyr = false;
@@ -38,10 +36,12 @@ int main(int argc, char** argv){
 
 ros::init(argc,argv, "kalman_");
 
+//TODO Tornar topicos inscritos parametrizados
+
 ros::NodeHandle n;
-ros::Subscriber sub_a = n.subscribe("gpar_k64f_imu/accelerations",100,acc_callback);
-ros::Subscriber sub_g = n.subscribe("gpar_k64f_imu/angular_vels",100,gyr_callback);
-ros::Subscriber sub_m = n.subscribe("gpar_k64f_imu/magnetic_field",100, mag_callback);
+ros::Subscriber sub_a = n.subscribe("k64f_imu/accelerations",100,acc_callback);
+ros::Subscriber sub_g = n.subscribe("k64f_imu/angular_vels",100,gyr_callback);
+ros::Subscriber sub_m = n.subscribe("k64f_imu/magnetic_field",100, mag_callback);
 ros::Publisher pub_q = n.advertise<geometry_msgs::QuaternionStamped>("kalman_quaternion",10);
 
 ros::Rate r(50);
@@ -97,7 +97,6 @@ while(ros::ok()){
     	ros::spinOnce();
     	continue;
     }
-
     mag_field = AttitudeEstimation::GetMagField(mag);
     got_acc = false;
     got_mag = false;

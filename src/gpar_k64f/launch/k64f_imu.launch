@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+
+<node pkg="gpar_mcuserial" type="mcuserial_node" name="mcuserial_node" >
+   <param name="serial_port" type="string" value="/dev/ttyACM0"/>
+   </node>
+
+  <node pkg="gpar_k64f" type="k64f_imu" name="k64f_imu" output="screen" />
+
+
+
+</launch>

@@ -28,12 +28,14 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "geometry_msgs/Vector3.h"
+#include "sensor_msgs/Imu.h"
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf/tf.h>
 
 ros::Publisher pub_a;
 ros::Publisher pub_g;
 ros::Publisher pub_m;
+ros::Publisher pub_imu;
 
 #define ACC_CONVERSION (0.488e-3 * 9.80665)
 #define MAG_CONVERSION (0.1f)
@@ -46,6 +48,8 @@ int gx,gy,gz;
 int mx,my,mz;
 
 geometry_msgs::Vector3 acc,mag,gyr;
+sensor_msgs::Imu imu;
+
 
 // TODO tem forma melhor ?
 sscanf(msg->data.c_str(),"%d %d %d %d %d %d %d %d %d",
@@ -65,9 +69,22 @@ mag.x = mx * MAG_CONVERSION;
 mag.y = my * MAG_CONVERSION;
 mag.z = mz * MAG_CONVERSION;
 
+
+imu.header.stamp = ros::Time::now();
+imu.header.frame_id = "k64f";
+
+imu.angular_velocity.x = gyr.x;
+imu.angular_velocity.y = gyr.y;
+imu.angular_velocity.z = gyr.z;
+
+imu.linear_acceleration.x = acc.x;
+imu.linear_acceleration.y = acc.y;
+imu.linear_acceleration.z = acc.z;
+
 pub_a.publish(acc);
 pub_g.publish(gyr);
 pub_m.publish(mag);
+pub_imu.publish(imu);
 
 
 
@@ -103,6 +120,7 @@ int main(int argc, char **argv)
   pub_a = n.advertise<geometry_msgs::Vector3>("accelerations",10);
   pub_g = n.advertise<geometry_msgs::Vector3>("angular_vels",10);
   pub_m = n.advertise<geometry_msgs::Vector3>("magnetic_field",10);
+  pub_imu = n.advertise<sensor_msgs::Imu>("imu",10);
 
 
 	ros::spin();

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+
+<node pkg="gpar_mcuserial" type="mcuserial_node" name="mcuserial_node" >
+   <param name="serial_port" type="string" value="/dev/ttyACM0"/>
+   </node>
+
+   <!-- Frame = k64f_imu -->
+  <node pkg="gpar_k64f" type="k64f_imu" name="k64f_imu" output="screen" />
+
+  <node pkg="gpar_kalman" type="kalman_test" name="kalman_test" output="screen" />
+
+
+
+</launch>
