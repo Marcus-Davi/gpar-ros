@@ -133,6 +133,7 @@ double dx = xn-x0;
 double dy = yn-y0;
 double dz = zn-z0;
 
+
 double dist = sqrtf(dx*dx + dy*dy + dz*dz);
 
 ROS_INFO("max distance = %f !",dist);

@@ -5,7 +5,7 @@
 #include "geometry_msgs/QuaternionStamped.h"
 
 
-#include "Kalman.h"
+#include "gpar_kalman/Kalman.h"
 #include "gpar_kalman/ModelFunctions.h"
 
 
@@ -28,8 +28,6 @@ void mag_callback(const geometry_msgs::Vector3::ConstPtr& msg){
 mag = *msg;
 got_mag = true;
 }
-
-
 
 
 int main(int argc, char** argv){
@@ -84,10 +82,11 @@ double measurement[6];
 double states[4];
 
 geometry_msgs::Quaternion q;
+geometry_msgs::QuaternionStamped qs;
 static tf2_ros::TransformBroadcaster br; //tf Broadcaster
 geometry_msgs::TransformStamped imuTransform;
 
-
+ROS_INFO("Publising rotation ...");
 
 while(ros::ok()){
 
@@ -150,6 +149,11 @@ imuTransform.transform.translation.z = 0;
 imuTransform.transform.rotation = q;
 
 br.sendTransform(imuTransform);
+
+qs.quaternion = q;
+qs.header.stamp = imuTransform.header.stamp;
+pub_q.publish(qs);
+
 
 
 ros::spinOnce();

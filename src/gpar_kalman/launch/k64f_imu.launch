@@ -8,7 +8,7 @@
    <!-- Frame = k64f_imu -->
   <node pkg="gpar_k64f" type="k64f_imu" name="k64f_imu" output="screen" />
 
-  <node pkg="gpar_kalman" type="kalman_test" name="kalman_test" output="screen" />
+  <node pkg="gpar_kalman" type="kalman_k64f" name="kalman_k64f" output="screen" />
 
 
 

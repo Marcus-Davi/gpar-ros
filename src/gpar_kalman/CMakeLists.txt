@@ -11,11 +11,12 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   tf2_ros
+  sensor_msgs
 )
 
 find_package(Eigen3 REQUIRED NO_MODULE)
 
-set(KALMANLIBDIR /home/projeto/Workspace/Coding/C++/Cpp-Kalman/) #ALTERE DE ACORDO!!!!
+#set(KALMANLIBDIR /home/projeto/Workspace/Coding/C++/Cpp-Kalman/) #ALTERE DE ACORDO!!!!
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -107,7 +108,7 @@ set(KALMANLIBDIR /home/projeto/Workspace/Coding/C++/Cpp-Kalman/) #ALTERE DE ACOR
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES gpar_kalman
 #  CATKIN_DEPENDS roscpp std_msgs
 #  DEPENDS system_lib
@@ -120,18 +121,18 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 
-link_directories(${KALMANLIBDIR}/build) #kalman
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${KALMANLIBDIR}/include
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/gpar_kalman.cpp
-# )
+add_library(KalmanLIB
+#   src/${PROJECT_NAME}/Kalman.cpp
+   src/Kalman.cpp
+ )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -142,7 +143,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/gpar_kalman_node.cpp)
-add_executable(kalman_test src/kalman_test.cpp)
+add_executable(kalman_k64f src/kalman_k64f.cpp)
+add_executable(android_tf src/android_tf.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -159,9 +161,13 @@ add_executable(kalman_test src/kalman_test.cpp)
 #   ${catkin_LIBRARIES}
 # )
 
- target_link_libraries(kalman_test
+ target_link_libraries(kalman_k64f
    ${catkin_LIBRARIES}
    KalmanLIB
+ )
+
+ target_link_libraries(android_tf
+   ${catkin_LIBRARIES}
  )
 
 #############

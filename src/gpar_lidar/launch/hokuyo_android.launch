@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+
+
+   <node pkg="urg_node" type="urg_node" name="urg_node" output="screen" >
+	   <param name="serial_port" type="string" value="/dev/ttyACM0" />
+   </node>
+
+
+   <node pkg="gpar_lidar" type="hokuyo_cloud" name="hokuyo_cloud" output="screen" >
+   <param name="scan_topic" type="string" value="scan" />
+   <param name="input_cloud" type="string" value="cloud" />
+   <param name="cloud_frame_name" type="string" value="cloud" />
+   </node>
+
+  <node pkg="gpar_kalman" type="android_tf" name="android_tf" output="screen"/>
+
+
+  <node name="cloud_controller" pkg="gpar_lidar" type="cloud_controller_lms" output="screen">
+    <param name="input_cloud" type="str" value="cloud" />
+   </node>
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="static_ldmrs_imu_link" args="0 0 0 0 0 0 android cloud" /> 
+
+      <node name="rviz" pkg="rviz" type="rviz" required="true"
+      args="-d $(find gpar_lidar)/rviz/ldmrs.rviz" /> 
+
+</launch>
+

@@ -39,6 +39,7 @@
 
 laser_geometry::LaserProjection projector;
 ros::Publisher pub;
+std::string cloud_frame_name;
 
 double angle = 0;
 
@@ -94,7 +95,7 @@ unsigned int count = 0;
 
 
 
-cloud.header.frame_id = "cloud";
+cloud.header.frame_id = cloud_frame_name;
 cloud.header.stamp = ros::Time::now();
 pub.publish(cloud);
 
@@ -125,6 +126,11 @@ int main(int argc, char **argv)
    {
      output_cloud_name = "cloud";
      ROS_WARN("Need to set parameter 'output_cloud_name'.. set to \"%s\"",output_cloud_name.c_str());
+   }
+
+   if(!private_nh.getParam("cloud_frame_name",cloud_frame_name)){
+    cloud_frame_name = "cloud";
+    ROS_WARN("Need to set parameter 'cloud_frame_name'.. set to \"%s\"",cloud_frame_name.c_str());
    }
 
    ros::Subscriber sub = nh.subscribe(scan_topic_name,10,laser_callback);
