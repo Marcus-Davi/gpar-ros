@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(gpar_kalman)
+project(gpar_misc)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -13,10 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   sensor_msgs
 )
-
-find_package(Eigen3 REQUIRED NO_MODULE)
-
-#set(KALMANLIBDIR /home/projeto/Workspace/Coding/C++/Cpp-Kalman/) #ALTERE DE ACORDO!!!!
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -75,7 +71,7 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -108,9 +104,9 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES gpar_kalman
-#  CATKIN_DEPENDS roscpp std_msgs
+#  INCLUDE_DIRS include
+#  LIBRARIES gpar_misc
+#  CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
 
@@ -120,19 +116,15 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-
-
 include_directories(
-  include
+# include
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-add_library(KalmanLIB
-#   src/${PROJECT_NAME}/Kalman.cpp
-   src/Kalman.cpp
- )
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}/gpar_misc.cpp
+# )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -142,9 +134,7 @@ add_library(KalmanLIB
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/gpar_kalman_node.cpp)
-add_executable(kalman_k64f src/kalman_k64f.cpp)
-
+add_executable(android_tf src/android_tf.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -157,15 +147,9 @@ add_executable(kalman_k64f src/kalman_k64f.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
-
- target_link_libraries(kalman_k64f
+ target_link_libraries(android_tf
    ${catkin_LIBRARIES}
-   KalmanLIB
  )
-
 
 #############
 ## Install ##
@@ -214,7 +198,7 @@ add_executable(kalman_k64f src/kalman_k64f.cpp)
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_gpar_kalman.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_gpar_misc.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
