@@ -1,6 +1,6 @@
 # GPAR ROS #
 
-Os arquivos aqui contidos são pacotes ROS fornecidos pela DJI ou pela comunidade ROS. Pacotes com nome "gpar-*" foram desenvolvidos pelo laboratório.
+Pacotes ROS desenvolvidos pelo GPAR da UFC. 
 
 
 Contato: davi2812@dee.ufc.br ou gpardee@dee.ufc.br
@@ -8,7 +8,7 @@ Contato: davi2812@dee.ufc.br ou gpardee@dee.ufc.br
 Pacotes **ROS** do repositório:
     
  * gpar_lidar
-    - Pacote de construção de nuvem de pontos. Usa a **sick_ldmrs_laser**.
+    - Pacote de construção de nuvem de pontos. Usa a **sick_ldmrs_laser**. Processamento, junção e aquisição de nuvem de pontos.
 
 * gpar_k64f
   - Pacote não usado no projeto, mas desenvolvido para testes. Interface com K64F via Serial/Bluetooth. Usa **gpar_mcuserial**
