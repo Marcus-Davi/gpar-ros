@@ -2,11 +2,16 @@
 
 Pacotes ROS desenvolvidos pelo GPAR da UFC. 
 
-
 Contato: davi2812@dee.ufc.br ou gpardee@dee.ufc.br
 
 Pacotes **ROS** do repositório:
+
+ * gpar_camera
+    - Pacote de procesasmento simples de dados de câmera USB.
     
+ * gpar_kalman
+    - Pacote de implementação C++ de filtros de Kalman Linear e Estendido.
+   
  * gpar_lidar
     - Pacote de construção de nuvem de pontos. Usa a **sick_ldmrs_laser**. Processamento, junção e aquisição de nuvem de pontos.
 
@@ -24,6 +29,9 @@ Pacotes **ROS** do repositório:
 
 * libsick_ldrms
     - Biblioteca Core baixo nível para comunicação com LIDAR SICK LD-MRS.
+    
+* gpar_misc
+    - Pacote de utilitários.
     
     OBS: Todos estes pacotes requerem as bibliotecas ros-full, compiladas via codigo fonte ou instaladas diretamente.
     
