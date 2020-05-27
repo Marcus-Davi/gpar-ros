@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<launch>
+
+
+	<!-- aqui colocaremos o nó driver do LMS -->
+	<arg name="hostname" default="192.168.0.1"/> 
+    <arg name="cloud_topic" default="cloud"/>
+    <arg name="frame_id" default="cloud"/>
+    <node name="sick_lms_4xxx" pkg="sick_scan" type="sick_generic_caller" respawn="false" output="screen">
+
+        <!--<param name="robot_description" command="$(find xacro)/xacro.py '$(find sick_scan)/urdf/example.urdf.xacro'" />-->
+
+
+        <!-- Default: min_angle = -135 degree, max_angle = 135 -->
+        <!-- default values: -->
+        <!--
+          <param name="scanner_type" type="string" value="sick_tim_5xx" />
+          <param name="min_ang" type="double" value="-2.35619449" />
+          <param name="max_ang" type="double" value="2.35619449" />
+          <param name="intensity" type="bool" value="True" />
+          <param name="skip" type="int" value="0" />
+          <param name="frame_id" type="str" value="laser" />
+          <param name="time_offset" type="double" value="-0.001" />
+          <param name="publish_datagram" type="bool" value="False" />
+          <param name="subscribe_datagram" type="bool" value="false" />
+          <param name="device_number" type="int" value="0" />
+          <param name="range_min" type="double" value="0.05" />
+        -->
+        <param name="scanner_type" type="string" value="sick_lms_4xxx"/>
+
+        <!-- -135° -->
+        <param name="min_ang" type="double" value="-0.610865238"/>
+
+        <!-- 135° -->
+        <param name="max_ang" type="double" value="0.610865238"/>
+
+        <param name="use_binary_protocol" type="bool" value="true"/>
+        <param name="range_max" type="double" value="100.0"/>
+        <param name="intensity" type="bool" value="True"/>
+
+        <param name="hostname" type="string" value="$(arg hostname)"/>
+        <param name="cloud_topic" type="string" value="$(arg cloud_topic)"/>
+        <param name="frame_id" type="str" value="$(arg frame_id)"/>
+        <param name="port" type="string" value="2112"/>
+        <param name="timelimit" type="int" value="5"/>
+    </node>
+
+
+
+	<!-- acompla o quadro móvel com o quadro do lidar -->
+	<node name="tf_static1" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 moving_frame cloud" />
+
+	<!-- calcula o quadro móvel -->
+	<node name="movingframe" pkg="gpar_lidar" type="movingframe.py" >
+			<param name="frame_speed" type="str" value="0.5" /> <!-- velocidade do movimento do quadro -->
+	</node>
+
+	<!-- combina nuvens -->
+	<node name="simple_cloud_combinator" pkg="gpar_lidar" type="simple_cloud_combinator" output="screen" required="true" >
+			<param name="input_cloud" type="str" value="cloud" /> <!--tópico da nuvem -->
+	</node>
+
+	<!-- mostra nuvens -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_lidar)/rviz/movingframe.rviz" />
+
+</launch>

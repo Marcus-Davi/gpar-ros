@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf2
   tf2_ros
+  tf2_sensor_msgs
   sick_ldmrs_msgs
   laser_geometry
   pcl_conversions
@@ -175,7 +176,12 @@ add_executable(bulk_scan src/bulk_scan.cpp)
 add_executable(maptocloud src/maptocloud.cpp)
 add_executable(cloudtofile src/cloudtofile.cpp)
 add_executable(cloud_controller_color src/cloud_controller_color.cpp)
+add_executable(simple_cloud_combinator src/simple_cloud_combinator.cpp)
 
+target_link_libraries(simple_cloud_combinator
+ ${catkin_LIBRARIES}
+#  ${PCL_LIBRARIES}
+)
 
 target_link_libraries(cloud_controller
  ${catkin_LIBRARIES}

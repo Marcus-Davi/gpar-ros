@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+
+		<!-- teste preliminar -->
+		<node name="rosplay" pkg="rosbag" type="play" args="$(arg bag_filename) --pause --clock" output="screen" />
+
+	<!-- aqui colocaremos o nó driver do LMS -->
+
+
+
+
+
+
+	<!-- acompla o quadro móvel com o quadro do lidar -->
+	<node name="tf_static1" pkg="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 moving_frame cloud" />
+
+	<!-- calcula o quadro móvel -->
+	<node name="movingframe" pkg="gpar_lidar" type="movingframe.py" >
+			<param name="frame_speed" type="str" value="0.5" /> <!-- velocidade do movimento do quadro -->
+	</node>
+
+	<!-- combina nuvens -->
+	<node name="simple_cloud_combinator" pkg="gpar_lidar" type="simple_cloud_combinator" output="screen" required="true" >
+			<param name="input_cloud" type="str" value="cloud" /> <!--tópico da nuvem -->
+	</node>
+
+	<!-- mostra nuvens -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_lidar)/rviz/movingframe.rviz" />
+
+</launch>
