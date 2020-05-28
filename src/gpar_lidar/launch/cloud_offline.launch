@@ -4,8 +4,8 @@
 	<param name="/use_sim_time" value="true" />
 
 
-  <node name="cloud_controller" pkg="gpar_lidar" type="cloud_controller" output="screen">
-    <param name="input_cloud" type="str" value="cloud_ldmrs" />
+  <node name="cloud_controller" pkg="gpar_lidar" type="cloud_controller_lms" output="screen">
+    <param name="input_cloud" type="str" value="cloud" />
    </node>
 
 
@@ -14,8 +14,10 @@
       args="$(arg bag_filename) --pause --clock" output="screen" />
 
       <node name="rviz" pkg="rviz" type="rviz" required="true"
-      args="-d $(find gpar_lidar)/rviz/ldmrs.rviz" />
+			  args="-d $(find gpar_lidar)/rviz/cloud.rviz" />
 
+	<!-- possibilita salvar as nuvens individualmente -->
+	<node name="cloudtofile" pkg="gpar_lidar" type="cloudtofile" args="cloud" />
    <node name="resetpoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller/command_parser 2" />
    <node name="savepoints" pkg="rosservice" type="rosservice" args="call --wait /cloud_controller/command_parser 1" />
 
