@@ -13,6 +13,6 @@
   <!-- Applies kalman filter on IMU data from k64f_imu node -->
   <node pkg="gpar_kalman" type="kalman_k64f" name="kalman_k64f" output="screen" />
 
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find gpar_kalman)/rviz/tf.rviz" />
+		  <!--  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find gpar_kalman)/rviz/tf.rviz" /> -->
 
 </launch>
