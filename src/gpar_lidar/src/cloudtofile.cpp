@@ -8,7 +8,7 @@ static sensor_msgs::PointCloud2::Ptr cloud_g = boost::make_shared<sensor_msgs::P
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudT;
 
 
-
+// TODO Trnasformar em um service !
 void cloud_callback(const sensor_msgs::PointCloud2::Ptr cloud){
   ROS_INFO("GOT CLOUD!");
 cloud_g = cloud;
@@ -26,11 +26,13 @@ void save_map_callback(const std_msgs::String::ConstPtr& msg){
     std_time = time.sec;
     char* time_date = std::ctime(&std_time);
     char* home_path = getenv("HOME");
+	// TODO Criar pasta
     std::string str_path = std::string(home_path) + "/Pontos/pontos_sweep_";
     //std::string str_time = std::string(time_date);
     std::string str_time = std::to_string(time.sec);
     std::string str_pcd = str_path + str_time + ".pcd";
     // pcl::io::savePCDFileBinary(str_pcd,*cloud);
+	// TODO Verificar exceptions 
     pcl::io::savePCDFileASCII(str_pcd,*cloud);
     ROS_INFO("PCD Saved!");
 }
