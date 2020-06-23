@@ -222,9 +222,9 @@ target_link_libraries(cloud_controller_color
 #  ${PCL_LIBRARIES}
 )
 
-add_dependencies(cloud_controller gpar_lidar_gencpp)
-add_dependencies(cloud_controller_lms gpar_lidar_gencpp)
-add_dependencies(slider_node gpar_lidar_gencpp)
+add_dependencies(cloud_controller gpar_lidar_generate_messages_cpp)
+add_dependencies(cloud_controller_lms gpar_lidar_generate_messages_cpp)
+add_dependencies(slider_node gpar_lidar_generate_messages_cpp)
 
 #############
 ## Install ##
