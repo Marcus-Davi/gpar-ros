@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(gpar_k64f)
+cmake_minimum_required(VERSION 3.0.2)
+project(gpar_learn)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,11 +8,10 @@ project(gpar_k64f)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
   roscpp
+  rospy
   std_msgs
-  tf2
-  tf2_ros
+  message_filters
 )
 
 ## System dependencies are found with CMake's conventions
@@ -72,7 +71,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   geometry_msgs#   std_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -106,8 +105,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES imu_k64f
-#  CATKIN_DEPENDS geometry_msgs roscpp std_msgs
+#  LIBRARIES gpar_learn
+#  CATKIN_DEPENDS roscpp rospy
 #  DEPENDS system_lib
 )
 
@@ -124,7 +123,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/imu_k64f.cpp
+#   src/${PROJECT_NAME}/gpar_learn.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -135,10 +134,9 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/imu_k64f_node.cpp)
-add_executable(k64f_fused src/k64f_fused.cpp)
-add_executable(k64f_imu src/k64f_imu.cpp)
+# add_executable(${PROJECT_NAME}_node src/gpar_learn_node.cpp)
 
+add_executable(msg_filter_node src/msg_filter.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -155,11 +153,7 @@ add_executable(k64f_imu src/k64f_imu.cpp)
 #   ${catkin_LIBRARIES}
 # )
 
- target_link_libraries(k64f_fused
-   ${catkin_LIBRARIES}
- )
-
- target_link_libraries(k64f_imu
+ target_link_libraries(msg_filter_node
    ${catkin_LIBRARIES}
  )
 
@@ -172,7 +166,7 @@ add_executable(k64f_imu src/k64f_imu.cpp)
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
+# catkin_install_python(PROGRAMS
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
@@ -210,7 +204,7 @@ add_executable(k64f_imu src/k64f_imu.cpp)
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_imu_k64f.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_gpar_learn.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

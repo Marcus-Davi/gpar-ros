@@ -37,6 +37,7 @@ ros::Publisher pub_g;
 ros::Publisher pub_m;
 ros::Publisher pub_imu;
 
+// Vem do datasheet
 #define ACC_CONVERSION (0.488e-3 * 9.80665)
 #define MAG_CONVERSION (0.1f)
 #define GYR_CONVERSION (15.625e-3 * M_PI/180.0)
@@ -116,13 +117,13 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n("~");
 
-  ros::Subscriber sub = n.subscribe("/mcuserial_node/serial_data", 1000, serial_callback);
+  ros::Subscriber sub = n.subscribe("/mcuserial_node/serial_data", 1000, serial_callback); //OK!
   pub_a = n.advertise<geometry_msgs::Vector3>("accelerations",10);
   pub_g = n.advertise<geometry_msgs::Vector3>("angular_vels",10);
   pub_m = n.advertise<geometry_msgs::Vector3>("magnetic_field",10);
   pub_imu = n.advertise<sensor_msgs::Imu>("imu",10);
 
-
+	ROS_INFO("k64f_imu init sucess! ");
 	ros::spin();
   return 0;
 }

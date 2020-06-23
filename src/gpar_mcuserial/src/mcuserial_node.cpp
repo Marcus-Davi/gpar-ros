@@ -58,10 +58,10 @@ int main(int argc, char **argv)
   ros::NodeHandle n("~");
   std::string porta_serial;
   if ( n.getParam("serial_port",porta_serial) )
-	ROS_INFO("parametro lido com sucesso : %s",porta_serial.c_str());
+	ROS_INFO("parametro 'serial_port' lido com sucesso : %s",porta_serial.c_str());
    else{
 	porta_serial = "/dev/ttyACM0";
-	ROS_INFO("Porta n existe! usando padrao %s",porta_serial.c_str());
+	ROS_INFO("parametro 'serial_port' n existe! usando padrao %s",porta_serial.c_str());
 	}
 
 
@@ -86,6 +86,7 @@ int main(int argc, char **argv)
   ros::Publisher pub = n.advertise<std_msgs::String>("serial_data", 1000);
   int count = 0;
 
+  //TODO Implementar exception catch
   serial::Serial mcu_serial(porta_serial,115200,serial::Timeout::simpleTimeout(1000));
 
 if(mcu_serial.isOpen()){

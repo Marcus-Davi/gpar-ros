@@ -1,3 +1,4 @@
+#include "ros/node_handle.h"
 #include "ros/ros.h"
 #include "std_msgs/String.h" //Vem da plaquinha
 #include "geometry_msgs/Vector3.h"
@@ -32,11 +33,31 @@ got_mag = true;
 
 int main(int argc, char** argv){
 
-ros::init(argc,argv, "kalman_");
+ros::init(argc,argv, "kalman_k64f");
 
 //TODO Tornar topicos inscritos parametrizados
 
+std::string parent_frame;
+std::string child_frame;
+
+
+
+
 ros::NodeHandle n;
+ros::NodeHandle nh("~");
+
+if(! nh.getParam("parent_frame",parent_frame) ){
+		parent_frame = "map";
+		ROS_WARN("'parent_frame' parameter not set. setting to %s",parent_frame.c_str());
+}
+
+if(! nh.getParam("child_frame",child_frame) ){
+		child_frame = "imu";
+		ROS_WARN("'child_frame' parameter not set. setting to %s",child_frame.c_str());
+}
+
+
+
 ros::Subscriber sub_a = n.subscribe("k64f_imu/accelerations",100,acc_callback);
 ros::Subscriber sub_g = n.subscribe("k64f_imu/angular_vels",100,gyr_callback);
 ros::Subscriber sub_m = n.subscribe("k64f_imu/magnetic_field",100, mag_callback);
@@ -86,8 +107,9 @@ geometry_msgs::QuaternionStamped qs;
 static tf2_ros::TransformBroadcaster br; //tf Broadcaster
 geometry_msgs::TransformStamped imuTransform;
 
-ROS_INFO("Publising rotation ...");
 
+ROS_INFO("Publising rotation ...");
+ROS_INFO("Publishing TF %s -> %s", parent_frame.c_str(),child_frame.c_str());
 while(ros::ok()){
 
 
@@ -140,8 +162,8 @@ q.z = states[3]/norm;
 //pub_q.publish(q);
 
 imuTransform.header.stamp = ros::Time::now();
-imuTransform.header.frame_id = "map"; //"map" ou "odom"
-imuTransform.child_frame_id = "k64f"; //"cloud" ou "imu"
+imuTransform.header.frame_id = parent_frame; //"map" ou "odom"
+imuTransform.child_frame_id = child_frame; //"cloud" ou "imu"
 
 imuTransform.transform.translation.x = 0;
 imuTransform.transform.translation.y = 0;

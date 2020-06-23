@@ -1,18 +1,11 @@
 <?xml version="1.0"?>
 <launch>
 
-<node pkg="gpar_mcuserial" type="mcuserial_node" name="mcuserial_node" >
-   <param name="serial_port" type="string" value="/dev/ttyACM1"/>
-   </node>
+		<!-- this file, by default, creates a TF map-> IMU with orientation estimation -->
+		<include file="$(find gpar_kalman)/launch/k64f_imu_norviz.launch" />
 
-   <!-- Frame = k64f_imu -->
-  <node pkg="gpar_k64f" type="gpar_k64f_node" name="imu_k64f_node" output="screen" >
-   <param name="k64f_frame" type="string" value="map"/>
-   <param name="k64f_child_frame" type="string" value="tripe"/>
-   </node>
-
-  <node pkg="tf2_ros" type="static_transform_publisher" name="static_ldmrs_imu_link" args="0 0 0 0 0 -1.57 tripe cloud" />
-
+		<!-- thus, we create a new tranform that connects the lidar and the IMU -->
+		<node pkg="tf2_ros" name="tf2_ros" type="static_transform_publisher" args="0 0 0 0 0 0 imu cloud" />
 
    <node pkg="gpar_lidar" type="hokuyo_cloud" name="hokuyo_cloud" output="screen" >
    <param name="scan_topic" type="string" value="scan" />
@@ -30,7 +23,7 @@
    </node>
 
       <node name="rviz" pkg="rviz" type="rviz" required="true"
-      args="-d $(find gpar_lidar)/rviz/ldmrs.rviz" /> 
+      args="-d $(find gpar_lidar)/rviz/cloud.rviz" /> 
 
 </launch>
 

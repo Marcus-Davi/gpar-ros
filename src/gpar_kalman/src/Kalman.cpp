@@ -1,5 +1,8 @@
 #include "gpar_kalman/Kalman.h"
 
+/* Extender Kalman filtering algorithm 
+ * Author : Marcus Forte
+ */
 
 namespace Kalman {
 
