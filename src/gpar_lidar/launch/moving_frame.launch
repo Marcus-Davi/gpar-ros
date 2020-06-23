@@ -26,5 +26,6 @@
 
 	<!-- mostra nuvens -->
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_lidar)/rviz/movingframe.rviz" />
-
+	
+	<node name="salva_nuvem" pkg="gpar_lidar" type="cloudtofile" args="merged_cloud" output="screen" />
 </launch>

@@ -135,6 +135,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(android_tf src/android_tf.cpp)
+add_executable(dente_de_serra_node src/dente_de_serra.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -148,6 +149,10 @@ add_executable(android_tf src/android_tf.cpp)
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(android_tf
+   ${catkin_LIBRARIES}
+ )
+ 
+  target_link_libraries(dente_de_serra_node
    ${catkin_LIBRARIES}
  )
 
