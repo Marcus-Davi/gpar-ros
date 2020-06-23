@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+
+
+		<node name="msg_filter_test_node" type="msg_filter_node" pkg="gpar_learn" output="screen" >
+				<remap from="topico1" to="pose_1/point" />
+				<remap from="topico2" to="pose_2/point" />
+		</node>
+	<node name="pose_1" type="poser.py" pkg="gpar_learn" output="screen" args="4" >
+			<param name="freq" value="1" />
+			<param name="value" value="100" />
+	</node>
+
+	<node name="pose_2" type="poser.py" pkg="gpar_learn" output="screen" args="5">
+			<param name="freq" value="4" />
+			<param name="value" value="5" />
+	</node>
+
+
+
+</launch>
