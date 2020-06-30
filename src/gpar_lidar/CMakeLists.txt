@@ -172,7 +172,7 @@ add_executable(cloud_controller src/cloud_controller.cpp)
 add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
 add_executable(slider_node src/slider_node.cpp)
 add_executable(hokuyo_cloud src/hokuyo_cloud.cpp)
-add_executable(bulk_scan src/bulk_scan.cpp)
+# add_executable(bulk_scan src/bulk_scan.cpp)
 add_executable(maptocloud src/maptocloud.cpp)
 add_executable(cloudtofile src/cloudtofile.cpp)
 add_executable(cloud_controller_color src/cloud_controller_color.cpp)
@@ -202,10 +202,10 @@ target_link_libraries(hokuyo_cloud
 #  ${PCL_LIBRARIES}
 )
 
-target_link_libraries(bulk_scan
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
+# target_link_libraries(bulk_scan
+#  ${catkin_LIBRARIES}
+# #  ${PCL_LIBRARIES}
+# )
 
 target_link_libraries(maptocloud
  ${catkin_LIBRARIES}
@@ -224,6 +224,7 @@ target_link_libraries(cloud_controller_color
 
 add_dependencies(cloud_controller gpar_lidar_generate_messages_cpp)
 add_dependencies(cloud_controller_lms gpar_lidar_generate_messages_cpp)
+add_dependencies(cloud_controller_color ${gpar_lidar_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(slider_node gpar_lidar_generate_messages_cpp)
 
 #############
