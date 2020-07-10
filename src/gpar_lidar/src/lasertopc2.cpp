@@ -104,7 +104,7 @@ pub.publish(cloud);
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "hokuyo_cloud");
+  ros::init(argc, argv, "lasertopc2");
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
 
@@ -122,15 +122,15 @@ int main(int argc, char **argv)
      scan_topic_name = "scan";
      ROS_WARN("Need to set parameter 'scan_topic_name'.. set to \"%s\"",scan_topic_name.c_str());
    }
-  if(!private_nh.getParam("input_cloud",output_cloud_name))
+  if(!private_nh.getParam("output_cloud",output_cloud_name))
    {
      output_cloud_name = "cloud";
-     ROS_WARN("Need to set parameter 'output_cloud_name'.. set to \"%s\"",output_cloud_name.c_str());
+     ROS_WARN("Need to set parameter 'output_cloud'.. set to \"%s\"",output_cloud_name.c_str());
    }
 
-   if(!private_nh.getParam("cloud_frame_name",cloud_frame_name)){
-    cloud_frame_name = "cloud";
-    ROS_WARN("Need to set parameter 'cloud_frame_name'.. set to \"%s\"",cloud_frame_name.c_str());
+   if(!private_nh.getParam("cloud_frame",cloud_frame_name)){
+    cloud_frame_name = output_cloud_name;
+    ROS_WARN("Need to set parameter 'cloud_frame'.. set to \"%s\"",cloud_frame_name.c_str());
    }
 
    ros::Subscriber sub = nh.subscribe(scan_topic_name,10,laser_callback);

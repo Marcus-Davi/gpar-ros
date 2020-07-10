@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <node pkg="tf2_ros" type="static_transform_publisher" name="laser_top" args="0 0 1.5 0 1.57 0 map cloud_top" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="laser_front" args="-1.625 0 0 0 0 0 map cloud_front" />
+  
+     <node pkg="gpar_lidar" type="lasertopc2" name="lasertopc2_top" output="screen" >
+   <param name="angle_bound" type="double" value="0.0" />
+   <param name="scan_topic" type="string" value="laser_scan_top" />
+   <param name="output_cloud" type="string" value="cloud_top" />
+   <param name="cloud_frame" type="string" value="cloud_top" />
+   </node>
+   
+        <node pkg="gpar_lidar" type="lasertopc2" name="lasertopc2_front" output="screen" >
+   <param name="angle_bound" type="double" value="0" />
+   <param name="scan_topic" type="string" value="laser_scan_front" />
+   <param name="output_cloud" type="string" value="cloud_front" />
+   <param name="cloud_frame" type="string" value="cloud_front" />
+   </node>
+
+
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find gpar_lidar)/rviz/coppelia_bulk.rviz"  />
+
+
+
+</launch>
+

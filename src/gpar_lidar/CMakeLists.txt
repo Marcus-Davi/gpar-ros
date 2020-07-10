@@ -12,7 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf2
   tf2_ros
+  tf2_msgs
   tf2_sensor_msgs
+  sensor_msgs
   sick_ldmrs_msgs
   laser_geometry
   pcl_conversions
@@ -171,7 +173,7 @@ include_directories(
 add_executable(cloud_controller src/cloud_controller.cpp)
 add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
 add_executable(slider_node src/slider_node.cpp)
-add_executable(hokuyo_cloud src/hokuyo_cloud.cpp)
+add_executable(lasertopc2 src/lasertopc2.cpp)
 add_executable(bulk_scan src/bulk_scan.cpp)
 add_executable(maptocloud src/maptocloud.cpp)
 add_executable(cloudtofile src/cloudtofile.cpp)
@@ -197,7 +199,7 @@ target_link_libraries(cloud_controller_lms
 #  ${PCL_LIBRARIES}
 )
 
-target_link_libraries(hokuyo_cloud
+target_link_libraries(lasertopc2
  ${catkin_LIBRARIES}
 #  ${PCL_LIBRARIES}
 )

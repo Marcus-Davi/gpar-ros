@@ -79,8 +79,14 @@ int main(int argc,char** argv){
 		sync.registerCallback(time_sync_callback);
 
 
+	ros::Rate r(0.1);
 
+	while(ros::ok()){
 
-		ros::spin();
+		r.sleep();
+		ros::spinOnce();
+	}
+
+		return 0;
 
 }
