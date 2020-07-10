@@ -204,10 +204,10 @@ target_link_libraries(lasertopc2
 #  ${PCL_LIBRARIES}
 )
 
-target_link_libraries(bulk_scan
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
+ target_link_libraries(bulk_scan
+  ${catkin_LIBRARIES}
+ #  ${PCL_LIBRARIES}
+ )
 
 target_link_libraries(maptocloud
  ${catkin_LIBRARIES}
@@ -226,6 +226,7 @@ target_link_libraries(cloud_controller_color
 
 add_dependencies(cloud_controller gpar_lidar_generate_messages_cpp)
 add_dependencies(cloud_controller_lms gpar_lidar_generate_messages_cpp)
+add_dependencies(cloud_controller_color ${gpar_lidar_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(slider_node gpar_lidar_generate_messages_cpp)
 
 #############

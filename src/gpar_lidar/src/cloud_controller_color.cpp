@@ -181,40 +181,44 @@ return;
 }
 
 //ler inteiro
-bool command_parser(gpar_lidar::Command::Request &req,
-	  	    gpar_lidar::Command::Response &res)
- {
-   res.command_res = 0;
+bool command_parser(gpar_lidar::Command::Request& req, gpar_lidar::Command::Response& res)
+{
+		res.success = false;
 
-  switch(req.command){
-   case 0:
-   ROS_INFO("Stop Merging.. \n");
-   StartAggregation = false;
-   res.command_res = 1;
-   break;
-   case 1:
-   ROS_INFO("Merging clouds.. \n");
-   StartAggregation = true;
-   res.command_res = 1;
-   break;
-   case 2:
-   ROS_INFO("Restarting cloud.. \n");
-   cloud_lower_->clear();
-   res.command_res = 1;
-   break;
-   case 3:
-   ROS_INFO("Saving cloud.. \n");
-   savePoints(cloud_lower_);
-   res.command_res = 1;
-   break;
-   default:
-   break;
+		switch(req.command){
+				case 0:
+						ROS_WARN("Stop Merging.. \n");
+						res.message = "Parar Agregacao \n";
+						StartAggregation = false;
+						res.success = true;
+						break;
+				case 1:
+						ROS_WARN("Merging clouds.. \n");
+						StartAggregation = true;
+						res.message = "Agregando Nuvens...";
+						res.success = true;
+						break;
+				case 2:
+						 ROS_WARN("Restarting cloud.. \n");
+						cloud_lower_->clear();
+						res.message = "Nuvens Limpas!";
+						res.success = true;
+						break;
+				case 3:
+						ROS_WARN("Salvando Nuvens...");
+						savePoints(cloud_lower_); //Pode ser multithread!
+						ROS_WARN("Nuvens Salvas!");
+						res.message = "Nuvens Salvas!";
+						res.success = true;
+						break;
+				default:
+						break;
 
-   }
+		}
 
 
-  return true;
- }
+		return true;
+}
 
 
 int main(int argc, char **argv)

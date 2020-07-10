@@ -35,17 +35,21 @@
 #include <ros/ros.h>
 #include <std_msgs/UInt16.h>
 
+// #include <tf2_ros/transform_listener.h>
 #include <tf/transform_listener.h>
-#include <tf/message_filter.h>
 #include <message_filters/subscriber.h>
+#include <tf/message_filter.h>
+
 
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/io/ply_io.h>
 
 #include <sensor_msgs/PointCloud2.h>
+#include <sick_ldmrs_msgs/sick_ldmrs_point_type.h>
 #include <pcl/point_cloud.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl_ros/transforms.h>
+#include <pcl/common/common.h>
 #include <pcl_ros/impl/transforms.hpp>   // necessary because of custom point type
 
 #include <gpar_lidar/Command.h>
@@ -60,13 +64,17 @@ std::vector<int> n_pts_list; //lista de numero de pontos por pacote
 ofstream myfile;
 
 void ResolveDir();
-
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloudT;
+typedef pcl::PointXYZ PointT;
+typedef pcl::PointCloud<PointT> PointCloudT;
 ros::Publisher pub_;
 ros::Publisher pub_npoints;
 
+// tf2_ros::Buffer *tfBuffer;
+// tf2_ros::TransformListener *tfListener;
 tf::TransformListener* tf_;
+
 std::string fixed_frame_;
+std::string source_frame_;
 PointCloudT::Ptr cloud_lower_ = boost::make_shared<PointCloudT>();
 
 void savePoints(const PointCloudT::ConstPtr& pc){
@@ -108,7 +116,7 @@ n_pts_list.clear(); //verificar se ja foi 'cleared' ? TODO
 bool StartAggregation = false;
 
 
-
+//Callback da nuvem
 void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
 {
   static std_msgs::UInt16 npts_msg;
@@ -133,24 +141,49 @@ double dz = zn-z0;
 
 double dist = sqrtf(dx*dx + dy*dy + dz*dz);
 
-//ROS_INFO("max distance = %f !",dist);
+PointT min,max;
+
+pcl::getMinMax3D(*cloud,min,max);
+double h = abs(max.x - min.x);
+
+// ROS_INFO("min_x = %f , max_x = %f",min.x,max.x);
+// ROS_INFO("min_z = %f , max_z = %f",min.z,max.z);
+
+
+
+
+// ROS_INFO("max distance = %f !",dist);
 if(!StartAggregation)
 return;
-
-
 
   // ----- transform to fixed frame
   try
   {
+    //procura transformada mais recente entre os quadros dados
+    //geometry_msgs::TransformStamped tf = tfBuffer->lookupTransform(fixed_frame_,source_frame_,ros::Time(0));
+    
+    
+    //nuvem transformada
     PointCloudT::Ptr cloud_fixed = boost::make_shared<PointCloudT>();
+    
+
+    //pcl_ros::transformPointCloud(*cloud,*cloud_fixed,tf.transform);
+    //pcl_ros::transformPointCloud(fixed_frame_,*cloud,*cloud_fixed,*tfBuffer);
+      
+    //*cloud_lower_ += *cloud_fixed;
 
     if (!pcl_ros::transformPointCloud(fixed_frame_, *cloud, *cloud_fixed, *tf_))
     {
       ROS_WARN("TF exception in transformPointCloud!");
       return ;
     }
-    cloud = cloud_fixed;
+  *cloud_lower_ += *cloud_fixed;
   }
+
+    // catch(tf2::TransformException& ex){
+    // ROS_WARN("TF Exception %s", ex.what());
+    // return;
+    // }
   catch (tf::TransformException& ex)
   {
     ROS_WARN("TF Exception %s", ex.what());
@@ -158,11 +191,10 @@ return;
   }
 
   // ----- concatenate lower + upper clouds
-
-
+  
   n_pts_list.push_back(current_cloud_size);
 
-  *cloud_lower_ += *cloud;
+  
 
 
   // ----- publish
@@ -170,48 +202,50 @@ return;
   pcl::toROSMsg(*cloud_lower_, *msg);
   msg->header.stamp = pc->header.stamp;
   msg->header.frame_id = fixed_frame_;
-  pub_.publish(msg);
-
-
+  pub_.publish(msg); //vamos verificar a necessidade de publicar a nuvem inteira
 
 }
 
 //ler inteiro
-bool command_parser(gpar_lidar::Command::Request &req,
-	  	    gpar_lidar::Command::Response &res)
- {
-   res.command_res = 0;
+//ler inteiro
+bool command_parser(gpar_lidar::Command::Request& req, gpar_lidar::Command::Response& res)
+{
+		res.success = false;
 
-  switch(req.command){
-   case 0:
-   ROS_INFO("Stop Merging.. \n");
-   StartAggregation = false;
-   res.command_res = 1;
-   break;
-   case 1:
-   ROS_INFO("Merging clouds.. \n");
-   StartAggregation = true;
-   res.command_res = 1;
-   break;
-   case 2:
-   ROS_INFO("Restarting cloud.. \n");
-   cloud_lower_->clear();
-   res.command_res = 1;
-   break;
-   case 3:
-   ROS_INFO("Saving cloud.. \n");
-   savePoints(cloud_lower_);
-   res.command_res = 1;
-   break;
-   default:
-   break;
+		switch(req.command){
+				case 0:
+						ROS_WARN("Stop Merging.. \n");
+						res.message = "Parar Agregacao \n";
+						StartAggregation = false;
+						res.success = true;
+						break;
+				case 1:
+						ROS_WARN("Merging clouds.. \n");
+						StartAggregation = true;
+						res.message = "Agregando Nuvens...";
+						res.success = true;
+						break;
+				case 2:
+						 ROS_WARN("Restarting cloud.. \n");
+						cloud_lower_->clear();
+						res.message = "Nuvens Limpas!";
+						res.success = true;
+						break;
+				case 3:
+						ROS_WARN("Salvando Nuvens...");
+						savePoints(cloud_lower_); //Pode ser multithread!
+						ROS_WARN("Nuvens Salvas!");
+						res.message = "Nuvens Salvas!";
+						res.success = true;
+						break;
+				default:
+						break;
 
-   }
+		}
 
 
-  return true;
- }
-
+		return true;
+}
 
 int main(int argc, char **argv)
 {
@@ -224,19 +258,31 @@ int main(int argc, char **argv)
   if (!private_nh.getParam("fixed_frame", fixed_frame_))
   {
    fixed_frame_ = "map";
-   ROS_WARN("Need to set parameter '_fixed_frame'.. set to \"%s\"",fixed_frame_.c_str());
+   ROS_WARN("Need to set parameter fixed_frame.. set to \"%s\"",fixed_frame_.c_str());
   }
 
   if(!private_nh.getParam("input_cloud",input_cloud_node))
    {
-    ROS_FATAL("Please set '_input_cloud' parameter' !");
+    ROS_FATAL("Need to set input node to subscribe to!");
+    return 1;
+   }
+  //ex: ldmrs
+     if(!private_nh.getParam("source_frame",source_frame_))
+   {
+    ROS_FATAL("Need to 'source_frame!'   ");
     return 1;
    }
 
-// SERIVCE
 
- ros::ServiceServer service = private_nh.advertiseService("command_parser", command_parser);
+ ros::ServiceServer service = private_nh.advertiseService("command", command_parser);
 
+  /* Novo ros não compila kinect */
+  // tfBuffer = new tf2_ros::Buffer;
+  // tfListener = new tf2_ros::TransformListener(*tfBuffer);
+
+  // ros::Subscriber cloud_sub = nh.subscribe(input_cloud_node,10,callback);
+  // //Verificar como usar message filter com tf2_ros + source/target frame
+  
   tf_ = new tf::TransformListener(nh, ros::Duration(3.0));
 
   message_filters::Subscriber<sensor_msgs::PointCloud2> sub;
@@ -251,6 +297,10 @@ int main(int argc, char **argv)
 
   ros::spin();
 
+
+// delete tfBuffer;
+// delete tfListener;
+/*  OLD CODE */
   delete tf_filter;
   delete tf_;
 
