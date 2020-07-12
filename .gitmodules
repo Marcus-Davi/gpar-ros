@@ -1,3 +1,6 @@
 [submodule "src/usb_cam"]
 	path = src/usb_cam
 	url = https://github.com/ros-drivers/usb_cam.git
+[submodule "src/sick_scan"]
+	path = src/sick_scan
+	url = git@github.com:Marcus-Davi/sick_scan.git
