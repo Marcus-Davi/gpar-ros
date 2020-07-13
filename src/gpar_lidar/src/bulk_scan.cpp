@@ -69,7 +69,7 @@ bool start_merge = false;
 
 
 // Nuvem Global
-PointCloudT::Ptr cloud_merged = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr cloud_object = boost::make_shared<PointCloudT>();
 
 
 
@@ -78,21 +78,21 @@ if(start_merge){
   ROS_WARN("merging..");
 } else {
   ROS_WARN("waiting..");
-  cloud_merged->clear();
+  cloud_object->clear();
 }
 
 if(!start_merge)
 return;
 
 
-PointCloudT::Ptr cloud_in = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr cloud_top = boost::make_shared<PointCloudT>();
 PointCloudT::Ptr cloud_map = boost::make_shared<PointCloudT>();
 
 PointCloudT::Ptr cloud_map_output = boost::make_shared<PointCloudT>();
 
 
 
-pcl::fromROSMsg(*pc,*cloud_in);
+pcl::fromROSMsg(*pc,*cloud_top);
 
 
 // Transforma
@@ -100,14 +100,35 @@ pcl::fromROSMsg(*pc,*cloud_in);
 try { 
 //geometry_msgs::TransformStamped tf = tf_buffer->lookupTransform("map",pc->header.frame_id,ros::Time(0));
 
-pcl_ros::transformPointCloud("map",*cloud_in,*cloud_map,*tf_buffer);
-// agora desloca junto com frame obj
+pcl_ros::transformPointCloud("map",*cloud_top,*cloud_map,*tf_buffer);
+
+
+
+// O "map" tem origem imediatamente abaixo do cloud_top
 geometry_msgs::TransformStamped tf_map_obj = tf_buffer->lookupTransform("map","obj",ros::Time(0));
 
-// TODO PENSAR !!!!!!!
-*cloud_merged += *cloud_map; 
 
-pcl_ros::transformPointCloud(*cloud_merged,*cloud_merged,tf_map_obj.transform);
+/* A Ideia :
+1) Transforma nuvem "top" segundo frame "map". chamo de "cloud_map"
+2) Um quadro móvel, "obj", se desloca junto com objeto a ser escaneado.
+3) Translada nuvem "cloud_obj" junto com objeto. A "cloud_object" contem todo histórico de medidas
+4) Grava/agrega/soma/junta a nuvem "cloud_map" em "cloud_object". chamo de "cloud_object"
+3) 
+
+*/
+
+
+//Translada
+pcl_ros::transformPointCloud(*cloud_object,*cloud_object,tf_map_obj.transform);
+*cloud_object += *cloud_map;
+
+ROS_WARN("%f %f %f \t %f %f %f %f",tf_map_obj.transform.translation.x,
+                                   tf_map_obj.transform.translation.y,
+                                   tf_map_obj.transform.translation.z,
+                                   tf_map_obj.transform.rotation.w,
+                                   tf_map_obj.transform.rotation.x,
+                                   tf_map_obj.transform.rotation.y,
+                                   tf_map_obj.transform.rotation.z);
 
 
 } catch(tf2::TransformException &ex) {
@@ -116,10 +137,8 @@ ROS_WARN("%s", ex.what());
 
 
 
-
-
 sensor_msgs::PointCloud2Ptr cloud_msg = boost::make_shared<sensor_msgs::PointCloud2>();
-pcl::toROSMsg(*cloud_merged,*cloud_msg);
+pcl::toROSMsg(*cloud_object,*cloud_msg);
 cloud_msg->header.frame_id = "map";
 cloud_msg->header.stamp = ros::Time::now();
 merged_cloud.publish(cloud_msg);
@@ -165,7 +184,7 @@ static tf2_ros::TransformBroadcaster br;
 geometry_msgs::TransformStamped transformStamped;
 
 transformStamped.header.stamp = ros::Time::now();
-transformStamped.header.frame_id = "cloud_front";
+transformStamped.header.frame_id = "map";
 transformStamped.child_frame_id = "obj";
 
 tf2::Quaternion q;
