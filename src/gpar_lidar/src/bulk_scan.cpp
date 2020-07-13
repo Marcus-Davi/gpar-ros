@@ -120,16 +120,18 @@ geometry_msgs::TransformStamped tf_map_obj = tf_buffer->lookupTransform("map","o
 
 //Translada
 pcl_ros::transformPointCloud(*cloud_object,*cloud_object,tf_map_obj.transform);
+
+// Funde. Por algum motivo a nuvem tá sendo duplicada no map e no obj
 *cloud_object += *cloud_map;
 
-ROS_WARN("%f %f %f \t %f %f %f %f",tf_map_obj.transform.translation.x,
+/*ROS_WARN("%f %f %f \t %f %f %f %f",tf_map_obj.transform.translation.x,
                                    tf_map_obj.transform.translation.y,
                                    tf_map_obj.transform.translation.z,
                                    tf_map_obj.transform.rotation.w,
                                    tf_map_obj.transform.rotation.x,
                                    tf_map_obj.transform.rotation.y,
                                    tf_map_obj.transform.rotation.z);
-
+*/
 
 } catch(tf2::TransformException &ex) {
 ROS_WARN("%s", ex.what());
