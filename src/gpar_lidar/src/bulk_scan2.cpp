@@ -37,7 +37,7 @@
 #include <tf/transform_listener.h>
 #include <tf/message_filter.h>
 
-#include <message_filters/subscriber.h>
+
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -52,6 +52,10 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/subscriber.h>
 
 ros::Publisher merged_cloud;
 
@@ -77,7 +81,7 @@ PointCloudT::Ptr cloud_object = boost::make_shared<PointCloudT>();
 
 
 
-void top_callback(const sensor_msgs::PointCloud2ConstPtr pc){
+void top_callback(const sensor_msgs::PointCloud2ConstPtr pc1,const sensor_msgs::PointCloud2ConstPtr pc2){
 if(start_merge){
   ROS_WARN("merging..");
 } else {
@@ -85,18 +89,23 @@ if(start_merge){
   cloud_object->clear();
 }
 
+ROS_INFO("synced");
+
 if(!start_merge)
 return;
 
 
-PointCloudT::Ptr cloud_top = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr cloud_top1 = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr cloud_top2 = boost::make_shared<PointCloudT>();
 PointCloudT::Ptr cloud_map = boost::make_shared<PointCloudT>();
 
 PointCloudT::Ptr cloud_map_output = boost::make_shared<PointCloudT>();
 
 
 
-pcl::fromROSMsg(*pc,*cloud_top);
+pcl::fromROSMsg(*pc1,*cloud_top1);
+pcl::fromROSMsg(*pc2,*cloud_top2);
+
 
 
 // Transforma
@@ -104,9 +113,11 @@ pcl::fromROSMsg(*pc,*cloud_top);
 try { 
 //geometry_msgs::TransformStamped tf = tf_buffer->lookupTransform("map",pc->header.frame_id,ros::Time(0));
 
-pcl_ros::transformPointCloud("map",*cloud_top,*cloud_map,*tf_buffer);
+pcl_ros::transformPointCloud("map",*cloud_top1,*cloud_top1,*tf_buffer);
+pcl_ros::transformPointCloud("map",*cloud_top2,*cloud_top2,*tf_buffer);
 
 
+*cloud_map = *cloud_top1 + *cloud_top2; // junta as 2
 
 // O "map" tem origem imediatamente abaixo do cloud_top
 geometry_msgs::TransformStamped tf_map_obj = tf_buffer->lookupTransform("map","obj",ros::Time(0));
@@ -128,14 +139,6 @@ pcl_ros::transformPointCloud(*cloud_map,*cloud_map,tf_map_obj.transform);
 // Funde. Por algum motivo a nuvem tá sendo duplicada no map e no obj
 *cloud_object += *cloud_map;
 
-/*ROS_WARN("%f %f %f \t %f %f %f %f",tf_map_obj.transform.translation.x,
-                                   tf_map_obj.transform.translation.y,
-                                   tf_map_obj.transform.translation.z,
-                                   tf_map_obj.transform.rotation.w,
-                                   tf_map_obj.transform.rotation.x,
-                                   tf_map_obj.transform.rotation.y,
-                                   tf_map_obj.transform.rotation.z);
-*/
 
 } catch(tf2::TransformException &ex) {
 ROS_WARN("%s", ex.what());
@@ -208,7 +211,7 @@ static tf2_ros::TransformBroadcaster br;
 geometry_msgs::TransformStamped transformStamped;
 
 transformStamped.header.stamp = ros::Time::now();
-transformStamped.header.frame_id = "cloud_front";
+transformStamped.header.frame_id = "lidar_front";
 transformStamped.child_frame_id = "obj";
 
 tf2::Quaternion q;
@@ -235,7 +238,21 @@ int main(int argc, char **argv)
   ros::NodeHandle private_nh("~");
 
   ros::Subscriber front_laser = nh.subscribe("/cloud_front",10,front_callback);
-  ros::Subscriber top_laser = nh.subscribe("/cloud_top",10,top_callback);
+
+  //Usar message filter
+  	message_filters::Subscriber<sensor_msgs::PointCloud2> pc1_sub(nh,"/cloud_top1",1);
+		message_filters::Subscriber<sensor_msgs::PointCloud2> pc2_sub(nh,"/cloud_top2",1);
+  
+  	//message_filters::TimeSynchronizer<sensor_msgs::PointCloud2,sensor_msgs::PointCloud2> sync(pc1_sub,pc2_sub,10); //pq n funciona ?
+
+
+  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2,sensor_msgs::PointCloud2> MySyncPolicy;	
+  message_filters::Synchronizer<MySyncPolicy> sync2(MySyncPolicy(10),pc1_sub,pc2_sub);
+
+		sync2.registerCallback(boost::bind(&top_callback,_1,_2));
+
+
+		
 
   merged_cloud = nh.advertise<sensor_msgs::PointCloud2>("/cloud_merged",10);
 
@@ -249,15 +266,19 @@ int main(int argc, char **argv)
     return 1;
 
   }
-  
 
-
-  	tf_buffer = new tf2_ros::Buffer;
+  tf_buffer = new tf2_ros::Buffer;
 	tf_listener = new tf2_ros::TransformListener(*tf_buffer);
 
   
 
   ros::spin();
+
+
+  delete tf_buffer;
+  delete tf_listener;
+
+  return 0;
 }
 
 

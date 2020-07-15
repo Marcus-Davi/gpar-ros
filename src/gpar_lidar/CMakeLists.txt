@@ -175,6 +175,7 @@ add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
 add_executable(slider_node src/slider_node.cpp)
 add_executable(lasertopc2 src/lasertopc2.cpp)
 add_executable(bulk_scan src/bulk_scan.cpp)
+add_executable(bulk_scan2 src/bulk_scan2.cpp)
 add_executable(maptocloud src/maptocloud.cpp)
 add_executable(cloudtofile src/cloudtofile.cpp)
 add_executable(cloud_controller_color src/cloud_controller_color.cpp)
@@ -205,6 +206,11 @@ target_link_libraries(lasertopc2
 )
 
  target_link_libraries(bulk_scan
+  ${catkin_LIBRARIES}
+ #  ${PCL_LIBRARIES}
+ )
+ 
+  target_link_libraries(bulk_scan2
   ${catkin_LIBRARIES}
  #  ${PCL_LIBRARIES}
  )
