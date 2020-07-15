@@ -170,16 +170,27 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
+#cloud controller
 add_executable(cloud_controller src/cloud_controller.cpp)
 add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
-add_executable(slider_node src/slider_node.cpp)
-add_executable(lasertopc2 src/lasertopc2.cpp)
-add_executable(bulk_scan src/bulk_scan.cpp)
-add_executable(bulk_scan2 src/bulk_scan2.cpp)
-add_executable(maptocloud src/maptocloud.cpp)
-add_executable(cloudtofile src/cloudtofile.cpp)
 add_executable(cloud_controller_color src/cloud_controller_color.cpp)
 add_executable(simple_cloud_combinator src/simple_cloud_combinator.cpp)
+
+# application
+add_executable(slider_node src/slider_node.cpp)
+
+
+# bulk scan
+add_executable(bulk_scan src/bulk_scan.cpp)
+add_executable(bulk_scan2 src/bulk_scan2.cpp)
+add_executable(bulk_scan3 src/bulk_scan3.cpp)
+add_executable(bulk_scan_profiler src/bulk_scan_profiler.cpp)
+
+# utilities
+add_executable(maptocloud src/maptocloud.cpp)
+add_executable(cloudtofile src/cloudtofile.cpp)
+add_executable(lasertopc2 src/lasertopc2.cpp)
+
 
 target_link_libraries(simple_cloud_combinator
  ${catkin_LIBRARIES}
@@ -214,6 +225,17 @@ target_link_libraries(lasertopc2
   ${catkin_LIBRARIES}
  #  ${PCL_LIBRARIES}
  )
+ 
+   target_link_libraries(bulk_scan3
+  ${catkin_LIBRARIES}
+ #  ${PCL_LIBRARIES}
+ )
+ 
+   target_link_libraries(bulk_scan_profiler
+  ${catkin_LIBRARIES}
+ #  ${PCL_LIBRARIES}
+ )
+
 
 target_link_libraries(maptocloud
  ${catkin_LIBRARIES}

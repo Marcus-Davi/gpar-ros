@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<launch>
+
+
+		<node pkg="gpar_lidar" type="lasertopc2" name="lasertopc2_top1" output="screen" >
+				<param name="angle_bound" type="double" value="0" />
+				<param name="scan_topic" type="string" value="laser_scan_top1" />
+				<param name="output_cloud" type="string" value="cloud_top1" />
+				<param name="cloud_frame" type="string" value="lidar_top1" />
+		</node>
+
+		<node pkg="gpar_lidar" type="lasertopc2" name="lasertopc2_top2" output="screen" >
+				<param name="angle_bound" type="double" value="0" />
+				<param name="scan_topic" type="string" value="laser_scan_top2" />
+				<param name="output_cloud" type="string" value="cloud_top2" />
+				<param name="cloud_frame" type="string" value="lidar_top2" />
+		</node>
+				 
+		<node pkg="gpar_lidar" type="lasertopc2" name="lasertopc2_profiler" output="screen" >
+				<param name="angle_bound" type="double" value="0" />
+				<param name="scan_topic" type="string" value="laser_scan_profiler" />
+				<param name="output_cloud" type="string" value="cloud_profiler" />
+				<param name="cloud_frame" type="string" value="lidar_profiler" />
+		</node>
+
+		<node pkg="gpar_lidar" type="bulk_scan_profiler" name="bulk_scan_profiler" output="screen" >
+				<param name="x_min" value="-0.5" />
+				<param name="x_max" value="0.5" />
+		</node>
+
+		<node pkg="gpar_lidar" type="bulk_scan3" name="bulk_scan" output="screen" />
+
+		<node pkg="rviz" type="rviz" name="rviz" args="-d $(find gpar_lidar)/rviz/coppelia_bulk3.rviz"  />
+
+				<node pkg="tf2_ros" type="static_transform_publisher" name="lidar_map" args="0 0 0 0 0 0 map base_link" /> 
+
+				<param name="robot_description" textfile="$(find gpar_lidar)/urdf/bulk_dual_lidar_profiler.xml" />
+				<node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" />
+
+		</launch>
+
