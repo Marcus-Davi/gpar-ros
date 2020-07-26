@@ -46,179 +46,115 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl_ros/transforms.h>
 #include <pcl_ros/impl/transforms.hpp>   // necessary because of custom point type
-
+#include <pcl/filters/passthrough.h>
 
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 
-ros::Publisher merged_cloud;
+#include <std_msgs/UInt8.h>
 
 tf2_ros::TransformListener *tf_listener;
 tf2_ros::Buffer *tf_buffer;
 
 
+
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudT;
-float vel;
-float x0 = 0;
-ros::Time t0;
-bool first = false;
 
 bool start_merge = false;
-
-// Interval
 float x_min;
 float x_max;
 
-
 // Nuvem Global
-PointCloudT::Ptr cloud_object = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
+ros::Publisher merge_signal;
 
 
-
-void top_callback(const sensor_msgs::PointCloud2ConstPtr pc){
-if(start_merge){
-  ROS_WARN("merging..");
-} else {
-  ROS_WARN("waiting..");
-  cloud_object->clear();
-}
-
-if(!start_merge)
-return;
-
-
-PointCloudT::Ptr cloud_top = boost::make_shared<PointCloudT>();
-PointCloudT::Ptr cloud_map = boost::make_shared<PointCloudT>();
-
-PointCloudT::Ptr cloud_map_output = boost::make_shared<PointCloudT>();
-
-
-
-pcl::fromROSMsg(*pc,*cloud_top);
-
-
-// Transforma
-
-try { 
-//geometry_msgs::TransformStamped tf = tf_buffer->lookupTransform("map",pc->header.frame_id,ros::Time(0));
-
-pcl_ros::transformPointCloud("map",*cloud_top,*cloud_map,*tf_buffer);
-
-
-
-// O "map" tem origem imediatamente abaixo do cloud_top
-geometry_msgs::TransformStamped tf_map_obj = tf_buffer->lookupTransform("map","obj",ros::Time(0));
-
-
-/* A Ideia :
-1) Transforma nuvem "top" segundo frame "map". chamo de "cloud_map"
-2) Um quadro móvel, "obj", se desloca junto com objeto a ser escaneado.
-3) Translada nuvem "cloud_obj" junto com objeto. A "cloud_object" contem todo histórico de medidas
-4) Grava/agrega/soma/junta a nuvem "cloud_map" em "cloud_object". chamo de "cloud_object"
-3) 
-
-*/
-
-
-//Translada
-pcl_ros::transformPointCloud(*cloud_map,*cloud_map,tf_map_obj.transform);
-
-// Funde. Por algum motivo a nuvem tá sendo duplicada no map e no obj
-*cloud_object += *cloud_map;
-
-/*ROS_WARN("%f %f %f \t %f %f %f %f",tf_map_obj.transform.translation.x,
-                                   tf_map_obj.transform.translation.y,
-                                   tf_map_obj.transform.translation.z,
-                                   tf_map_obj.transform.rotation.w,
-                                   tf_map_obj.transform.rotation.x,
-                                   tf_map_obj.transform.rotation.y,
-                                   tf_map_obj.transform.rotation.z);
-*/
-
-} catch(tf2::TransformException &ex) {
-ROS_WARN("%s", ex.what());
-}
-
-// Apenas espelhar
-geometry_msgs::Transform mirror_tf ;
-tf2::Quaternion q_;
-q_.setRPY(0,0,M_PI);
-mirror_tf.rotation = tf2::toMsg(q_);
-mirror_tf.translation.x = 0;
-mirror_tf.translation.y = 0;
-mirror_tf.translation.z = 0;
-
-//pcl_ros::transformPointCloud(*cloud_object,*cloud_object,mirror_tf);
-
-
-sensor_msgs::PointCloud2Ptr cloud_msg = boost::make_shared<sensor_msgs::PointCloud2>();
-
-
-pcl::toROSMsg(*cloud_object,*cloud_msg);
-
-
-
-cloud_msg->header.frame_id = "map";
-cloud_msg->header.stamp = ros::Time::now();
-
-
-merged_cloud.publish(cloud_msg);
-
-// Merge 
-
-
-}
-
-void front_callback(const sensor_msgs::PointCloud2ConstPtr pc){
-// Calcular velocidade
-if(first == false){
-  t0 = ros::Time::now();
-  first = true;
-  return;
-}
-
-ros::Time t = ros::Time::now();
-ros::Duration dt = t - t0;
-t0 = t;
+// Callback
+void lidar_callback(const sensor_msgs::PointCloud2ConstPtr pc){
 
 
 boost::shared_ptr<PointCloudT> cloud = boost::make_shared<PointCloudT>();
+boost::shared_ptr<PointCloudT> cloud_filtered = boost::make_shared<PointCloudT>();
 
 pcl::fromROSMsg(*pc,*cloud);
 
-int size_2 = cloud->size()/2;
-if(size_2 == 0)
-return;
 
 
-float x = cloud->points[size_2].x;
+
+
+/* Ideia
+* filtrar pontos acima do chão (hardcode < 1.4 m)
+* tirar media
+* gerar posição no chão com a media
+
+*/
+//Processar nuvem
+	pcl::PassThrough<pcl::PointXYZ> pfilter;
+  pcl::PointXYZ min,max;
+	pfilter.setInputCloud(cloud);
+	pfilter.setFilterFieldName("x");
+	pfilter.setFilterLimits(0,1.4); //hardcoded floor
+	pfilter.filter(*cloud_filtered);
+
+  int n = cloud_filtered->size();
+  float x_avg = 0;
+  float y_avg = 0;
+  for(int i=0;i<n;++i){
+    y_avg += cloud_filtered->points[i].y;
+
+  }
+
+  y_avg /= n;
+  
+  geometry_msgs::PointStamped position_in;
+  position_in.point.x = 1.5; //hardcoded floor
+  position_in.point.y = y_avg;
+  position_in.point.z = 0;
+
+  geometry_msgs::PointStamped position_out;
+  
+  geometry_msgs::TransformStamped tf_point = tf_buffer->lookupTransform("map",pc->header.frame_id,ros::Time(0));
+  tf2::doTransform(position_in,position_out,tf_point);
+
+
+  //ROS_INFO("in %f %f %f",position_in.point.x,position_in.point.y,position_in.point.z);
+  //ROS_INFO("ou %f %f %f",position_out.point.x,position_out.point.y,position_out.point.z);
+
+
+
+
+float x = y_avg;
 ROS_INFO("x = %f",x);
 
-// A partir de x=1.6, grava nuvem
+std_msgs::UInt8 msg;
 if(x < x_max && x > x_min){ // AQUI DEFINIMOS A FAIXA. PODE SER UM MIX COM SENSOR TOP TBM! PARAMETRIZAR 
   start_merge = true;
+  msg.data = 1;
 } else {
   start_merge = false;
+    msg.data = 0;
 }
+
+merge_signal.publish(msg);
 
 // Geramos um frame na posição desse x
 static tf2_ros::TransformBroadcaster br;
 geometry_msgs::TransformStamped transformStamped;
 
 transformStamped.header.stamp = ros::Time::now();
-transformStamped.header.frame_id = "cloud_front";
+transformStamped.header.frame_id = "map";
 transformStamped.child_frame_id = "obj";
 
 tf2::Quaternion q;
-q.setRPY(0,0,M_PI);
+q.setRPY(0,0,0);
 geometry_msgs::Quaternion q_msg = tf2::toMsg(q);
 
 transformStamped.transform.rotation = q_msg;
 
-transformStamped.transform.translation.x = x;
-transformStamped.transform.translation.y = 0;
+transformStamped.transform.translation.x = position_out.point.x;
+transformStamped.transform.translation.y = position_out.point.y;
 transformStamped.transform.translation.z = 0;
 
 br.sendTransform(transformStamped);
@@ -230,14 +166,15 @@ br.sendTransform(transformStamped);
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "bulk_scan");
+  ros::init(argc, argv, "bulk_scan_profiler");
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
 
-  ros::Subscriber front_laser = nh.subscribe("/cloud_front",10,front_callback);
-  ros::Subscriber top_laser = nh.subscribe("/cloud_top",10,top_callback);
+  ros::Subscriber front_laser = nh.subscribe("/cloud_profiler",10,lidar_callback);
+  merge_signal = nh.advertise<std_msgs::UInt8>("merge_signal",5);
+  
+  
 
-  merged_cloud = nh.advertise<sensor_msgs::PointCloud2>("/cloud_merged",10);
 
   if (! private_nh.getParam("x_min",x_min) ) {
     ROS_ERROR("sete o parametro 'x_min'!");
@@ -250,14 +187,16 @@ int main(int argc, char **argv)
 
   }
   
-
-
-  	tf_buffer = new tf2_ros::Buffer;
+  tf_buffer = new tf2_ros::Buffer;
 	tf_listener = new tf2_ros::TransformListener(*tf_buffer);
 
   
 
   ros::spin();
+
+
+  delete tf_buffer;
+  delete tf_listener;
 }
 
 
