@@ -138,7 +138,27 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/gpar_learn_node.cpp)
 
-add_executable(msg_filter_node src/msg_filter.cpp)
+# add_executable(msg_filter_node src/msg_filter.cpp)
+# target_link_libraries(msg_filter_node
+# 		${catkin_LIBRARIES}
+# 		)
+
+
+# Automatic form to generate individual nodes out of any .cpp
+file(GLOB cpp_list RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp")
+
+foreach (file_path ${cpp_list})
+		# message(WARNING ${file_path})
+		string(REPLACE "src/" "" name_src ${file_path})
+		string(REPLACE ".cpp" "_node" name_final ${name_src})
+		# message(WARNING ${name_final})
+		add_executable(${name_final} ${file_path})
+
+		target_link_libraries(${name_final} 
+				${catkin_LIBRARIES}
+				)
+endforeach()
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -155,9 +175,6 @@ add_executable(msg_filter_node src/msg_filter.cpp)
 #   ${catkin_LIBRARIES}
 # )
 
- target_link_libraries(msg_filter_node
-   ${catkin_LIBRARIES}
- )
 
 #############
 ## Install ##
