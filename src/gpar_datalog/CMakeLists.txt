@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(gpar_learn)
+project(gpar_datalog)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,12 +8,10 @@ project(gpar_learn)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  rosbag
   roscpp
   rospy
-  std_msgs
-  message_filters
   message_generation
-  rosbag
 )
 
 ## System dependencies are found with CMake's conventions
@@ -50,18 +48,19 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   FloatStamped.msg
+# add_message_files(
+#   FILES
+#   Message1.msg
 #   Message2.msg
- )
+# )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
+add_service_files(
+  FILES
+  Command.srv
 #   Service1.srv
 #   Service2.srv
-# )
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -71,11 +70,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
+ generate_messages(
    DEPENDENCIES
    std_msgs  # Or other packages containing msgs
-   
-)
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -108,8 +106,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES gpar_learn
-#  CATKIN_DEPENDS roscpp rospy
+#  LIBRARIES gpar_datalog
+#  CATKIN_DEPENDS rosbag roscpp rospy
 #  DEPENDS system_lib
 )
 
@@ -120,14 +118,14 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+ include
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/gpar_learn.cpp
-# )
+ add_library(${PROJECT_NAME}_lib
+	include/gpar_datalog/datalog.cpp
+ )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -137,29 +135,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/gpar_learn_node.cpp)
-
-# add_executable(msg_filter_node src/msg_filter.cpp)
-# target_link_libraries(msg_filter_node
-# 		${catkin_LIBRARIES}
-# 		)
-
-
-# Automatic form to generate individual nodes out of any .cpp
-file(GLOB cpp_list RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp")
-
-foreach (file_path ${cpp_list})
-		# message(WARNING ${file_path})
-		string(REPLACE "src/" "" name_src ${file_path})
-		string(REPLACE ".cpp" "_node" name_final ${name_src})
-		# message(WARNING ${name_final})
-		add_executable(${name_final} ${file_path})
-
-		target_link_libraries(${name_final} 
-				${catkin_LIBRARIES}
-				)
-endforeach()
-
+add_executable(${PROJECT_NAME}_node src/gpar_datalog.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -169,13 +145,13 @@ endforeach()
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
-
+ target_link_libraries(${PROJECT_NAME}_node
+   ${catkin_LIBRARIES}
+   ${PROJECT_NAME}_lib #datalog
+ )
 
 #############
 ## Install ##
@@ -224,7 +200,7 @@ endforeach()
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_gpar_learn.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_gpar_datalog.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
