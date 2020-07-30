@@ -1,3 +1,5 @@
+/* Author : Marcus Forte <davi2812@dee.ufc.br> */
+
 #include <ros/ros.h> //General Ros stuff
 #include <sensor_msgs/PointCloud2.h> // Process PC2 message
 #include <pcl/point_types.h> // PCL types .. i.e PointXYZ

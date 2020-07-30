@@ -1,3 +1,5 @@
+/* Author : Marcus Forte <davi2812@dee.ufc.br> */
+
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "nav_msgs/OccupancyGrid.h"

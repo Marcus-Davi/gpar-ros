@@ -174,7 +174,7 @@ include_directories(
 add_executable(cloud_controller src/cloud_controller.cpp)
 add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
 add_executable(cloud_controller_color src/cloud_controller_color.cpp)
-add_executable(simple_cloud_combinator src/simple_cloud_combinator.cpp)
+add_executable(cloud_combinator src/cloud_combinator.cpp)
 
 # application
 add_executable(slider_node src/slider_node.cpp)
@@ -188,11 +188,18 @@ add_executable(bulk_scan_profiler src/bulk_scan_profiler.cpp)
 
 # utilities
 add_executable(maptocloud src/maptocloud.cpp)
+add_executable(filetocloud src/filetocloud.cpp)
 add_executable(cloudtofile src/cloudtofile.cpp)
 add_executable(lasertopc2 src/lasertopc2.cpp)
 
 
-target_link_libraries(simple_cloud_combinator
+target_link_libraries(filetocloud
+ ${catkin_LIBRARIES}
+#  ${PCL_LIBRARIES}
+)
+
+
+target_link_libraries(cloud_combinator
  ${catkin_LIBRARIES}
 #  ${PCL_LIBRARIES}
 )

@@ -1,13 +1,6 @@
-/** @file demo_flight_control.cpp
- *  @version 3.3
- *  @date May, 2017
- *
- *  @brief
- *  demo sample of how to use flight control APIs
- *
- *  @copyright 2017 DJI. All rights reserved.
- *
- */
+/* Author : Marcus Forte <davi2812@dee.ufc.br> */
+
+
 #include <ros/ros.h>
 #include "std_msgs/String.h"
 #include <tf/transform_listener.h>

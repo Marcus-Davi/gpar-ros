@@ -1,3 +1,6 @@
+
+/* Author : Marcus Forte <davi2812@dee.ufc.br> */
+
 #include "ros/ros.h"
 #include "ros/service_callback_helper.h"
 #include "ros/service_server.h"
