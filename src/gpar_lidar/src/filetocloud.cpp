@@ -40,7 +40,7 @@ int main(int argc,char** argv){
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 int k;
     if(pcl::io::loadPCDFile(cloud_file,*cloud)){
-        ROS_FATAL("count not open .pcd file.");
+        ROS_FATAL("could not open .pcd file.");
         ros::shutdown();
         exit(-1);
     }
