@@ -1,8 +1,0 @@
-prefix=/home/pi/ROS/gpar-ros/devel
-
-Name: gpar_lidar
-Description: Description of gpar_lidar
-Version: 0.0.0
-Cflags: -I/home/pi/ROS/gpar-ros/devel/include
-Libs: -L${prefix}/lib 
-Requires: 

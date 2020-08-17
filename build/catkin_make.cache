@@ -1,2 +1,0 @@
-gpar_lidar:gpar_raspy
--DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -GEclipse CDT4 - Unix Makefiles -DCATKIN_DEVEL_PREFIX=/home/pi/ROS/gpar-ros/devel -DCMAKE_INSTALL_PREFIX=/home/pi/ROS/gpar-ros/install
