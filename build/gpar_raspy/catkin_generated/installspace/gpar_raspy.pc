@@ -1,0 +1,8 @@
+prefix=/home/pi/ROS/gpar-ros/install
+
+Name: gpar_raspy
+Description: Description of gpar_raspy
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
