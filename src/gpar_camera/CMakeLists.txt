@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   pcl_ros
   message_generation
+  image_transport
 )
 
 ## System dependencies are found with CMake's conventions
@@ -141,6 +142,8 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/gpar_camera_node.cpp)
 add_executable(laser_camera src/laser_camera.cpp)
 
+add_executable(camera_get src/camera_get.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -160,6 +163,9 @@ add_executable(laser_camera src/laser_camera.cpp)
    ${catkin_LIBRARIES}
  )
 
+ target_link_libraries(camera_get
+   ${catkin_LIBRARIES}
+ )
 #############
 ## Install ##
 #############
