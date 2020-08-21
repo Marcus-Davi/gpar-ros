@@ -259,10 +259,10 @@ target_link_libraries(cloud_controller_color
 #  ${PCL_LIBRARIES}
 )
 
-add_dependencies(cloud_controller gpar_lidar_generate_messages_cpp)
-add_dependencies(cloud_controller_lms gpar_lidar_generate_messages_cpp)
-add_dependencies(cloud_controller_color ${gpar_lidar_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(slider_node gpar_lidar_generate_messages_cpp)
+add_dependencies(cloud_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(cloud_controller_lms ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(cloud_controller_color ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(slider_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
