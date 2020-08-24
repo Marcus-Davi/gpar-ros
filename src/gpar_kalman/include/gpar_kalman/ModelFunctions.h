@@ -43,7 +43,7 @@ static void MeasurementJacobian(const VectorXd& Xk,const VectorXd& Uk,void* Res)
 	float m = mag_field*0.9440f; // B * cos(m_incl)
 	float n = mag_field*0.3298f; // B * sin(m_incl)
 
-	static const float g = 9.8;
+	static const float g = 9.8055;
 
 	(*M)(0,0) = -Xk[2]*g;
 	(*M)(0,1) = Xk[3]*g;
@@ -116,7 +116,7 @@ void MeasurementFunction(const VectorXd& Xk,const VectorXd& Uk,void* Res){
 
 
 	MD::Quaternion qk(Xk[0],Xk[1],Xk[2],Xk[3]);
-	MD::Quaternion qg(0,0,0,9.8); //gravity
+	MD::Quaternion qg(0,0,0,9.8055); //gravity
 	MD::Quaternion qm(0,m,0,n); //gravity
 	MD::Quaternion qa,qb;
 

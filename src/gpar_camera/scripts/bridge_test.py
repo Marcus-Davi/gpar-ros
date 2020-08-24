@@ -14,10 +14,20 @@ from cv_bridge import CvBridge, CvBridgeError
 class image_converter:
 
   def __init__(self):
-    self.image_pub = rospy.Publisher("image_topic_2",Image)
+#    self.image_pub = rospy.Publisher("image_topic_2",Image)
 
     self.bridge = CvBridge()
     self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
+    cv2.namedWindow('mouseRGB')
+    cv2.setMouseCallback('mouseRGB',self.mouseRGB)
+
+
+  def mouseRGB(event,flags,x,y,param,z):
+          rospy.loginfo('x %f , y %f',x,y)
+
+         
+
+
 
   def callback(self,data):
     try:
@@ -29,13 +39,13 @@ class image_converter:
     if cols > 60 and rows > 60 :
       cv2.circle(cv_image, (50,50), 10, 255)
 
-    cv2.imshow("Image window", cv_image)
+    cv2.imshow('mouseRGB', cv_image)
     cv2.waitKey(3)
 
     try:
       image_msg = self.bridge.cv2_to_imgmsg(cv_image, "bgr8")
       image_msg.header.frame_id = 'map'
-      self.image_pub.publish(image_msg)
+      # self.image_pub.publish(image_msg)
     except CvBridgeError as e:
       print(e)
 

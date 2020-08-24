@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+
+
+  <!-- Applies kalman filter on IMU data from k64f_imu node -->
+  
+    <include file="$(find gpar_k64f)/launch/k64f_imu.launch" />
+  
+  <node pkg="gpar_kalman" type="kalman_k64f" name="kalman_k64f" output="screen" />
+
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find gpar_kalman)/rviz/tf.rviz" />
+
+</launch>

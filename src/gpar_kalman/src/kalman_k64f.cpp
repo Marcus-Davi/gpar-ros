@@ -118,21 +118,22 @@ while(ros::ok()){
     	ros::spinOnce();
     	continue;
     }
+    
     mag_field = AttitudeEstimation::GetMagField(mag);
     got_acc = false;
     got_mag = false;
     got_gyr = false;
 
-    input[1] = gyr.x;
-    input[0] = -gyr.y;
+    input[0] = gyr.x;
+    input[1] = gyr.y;
     input[2] = gyr.z;
 
-    measurement[1] = acc.x;
-    measurement[0] = -acc.y;
+    measurement[0] = acc.x;
+    measurement[1] = acc.y;
     measurement[2] = acc.z;
 
-    measurement[4] = mag.x;
-    measurement[3] = -mag.y;
+    measurement[3] = mag.x;
+    measurement[4] = mag.y;
     measurement[5] = mag.z;
 
 //input[1] = gyr.x;

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+	<!-- this file loads the quaternion from the MCU and "plots" its transform -->
+	
+	
+		<!-- reads serial port of MCU -->
+<node pkg="gpar_mcuserial" type="mcuserial_node" name="mcuserial_node" >
+   <param name="serial_port" type="string" value="/dev/ttyACM0"/>
+   </node>
+
+
+	<!-- get output of serial comm and generates IMU msg -->
+   <node pkg="gpar_k64f" type="k64f_fused" name="k64f_fused" output="screen" >
+		   <param name="k64f_frame" value="map" />
+		   <param name="k64f_child_frame" value="imu" />
+	   </node>
+
+
+	   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find gpar_k64f)/rviz/k64f_fusion.rviz" />
+
+
+
+</launch>

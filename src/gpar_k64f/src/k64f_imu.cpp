@@ -44,31 +44,19 @@ ros::Publisher pub_imu;
 
 
 void serial_callback(const std_msgs::String::ConstPtr& msg){
-int ax,ay,az;
-int gx,gy,gz;
-int mx,my,mz;
+
 
 geometry_msgs::Vector3 acc,mag,gyr;
 sensor_msgs::Imu imu;
 
 
-// TODO tem forma melhor ?
-sscanf(msg->data.c_str(),"%d %d %d %d %d %d %d %d %d",
-  &ax,&ay,&az,
-  &gx,&gy,&gz,
-  &mx,&my,&mz);
+// TODO tem forma melhor ? Serialization ?
+sscanf(msg->data.c_str(),"%lf %lf %lf %lf %lf %lf %lf %lf %lf",
+  &acc.x,&acc.y,&acc.z,
+  &gyr.x,&gyr.y,&gyr.z,
+  &mag.x,&mag.y,&mag.z);
 
-acc.x = ax * ACC_CONVERSION;
-acc.y = ay * ACC_CONVERSION;
-acc.z = az * ACC_CONVERSION;
 
-gyr.x = gx * GYR_CONVERSION;
-gyr.y = gy * GYR_CONVERSION;
-gyr.z = gz * GYR_CONVERSION;
-
-mag.x = mx * MAG_CONVERSION;
-mag.y = my * MAG_CONVERSION;
-mag.z = mz * MAG_CONVERSION;
 
 
 imu.header.stamp = ros::Time::now();
@@ -117,7 +105,7 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n("~");
 
-  ros::Subscriber sub = n.subscribe("/mcuserial_node/serial_data", 1000, serial_callback); //OK!
+  ros::Subscriber sub = n.subscribe("/mcuserial_node/serial_data", 100, serial_callback); //OK!
   pub_a = n.advertise<geometry_msgs::Vector3>("accelerations",10);
   pub_g = n.advertise<geometry_msgs::Vector3>("angular_vels",10);
   pub_m = n.advertise<geometry_msgs::Vector3>("magnetic_field",10);
