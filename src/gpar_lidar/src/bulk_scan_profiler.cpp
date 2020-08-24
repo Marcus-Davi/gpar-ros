@@ -38,6 +38,9 @@ float x_max;
 PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
 ros::Publisher merge_signal;
 
+std::string obj_frame;
+float lidar_height;
+
 
 // Callback
 void lidar_callback(const sensor_msgs::PointCloud2ConstPtr pc){
@@ -58,12 +61,15 @@ pcl::fromROSMsg(*pc,*cloud);
 * gerar posição no chão com a media
 
 */
+// TODO Ajeitar hardcoded floor
+
+
 //Processar nuvem
 	pcl::PassThrough<pcl::PointXYZ> pfilter;
   pcl::PointXYZ min,max;
 	pfilter.setInputCloud(cloud);
 	pfilter.setFilterFieldName("x");
-	pfilter.setFilterLimits(0,1.4); //hardcoded floor
+	pfilter.setFilterLimits(0,lidar_height-0.1); //hardcoded floor
 	pfilter.filter(*cloud_filtered);
 
   int n = cloud_filtered->size();
@@ -77,7 +83,7 @@ pcl::fromROSMsg(*pc,*cloud);
   y_avg /= n;
   
   geometry_msgs::PointStamped position_in;
-  position_in.point.x = 1.5; //hardcoded floor
+  position_in.point.x = lidar_height; //hardcoded floor
   position_in.point.y = y_avg;
   position_in.point.z = 0;
 
@@ -113,7 +119,8 @@ geometry_msgs::TransformStamped transformStamped;
 
 transformStamped.header.stamp = ros::Time::now();
 transformStamped.header.frame_id = "map";
-transformStamped.child_frame_id = "obj";
+//TODO parametrizar obj
+transformStamped.child_frame_id = "obj"; 
 
 tf2::Quaternion q;
 q.setRPY(0,0,0);
@@ -139,6 +146,7 @@ int main(int argc, char **argv)
   ros::NodeHandle private_nh("~");
 
   ros::Subscriber front_laser = nh.subscribe("/cloud_profiler",10,lidar_callback);
+  // TODO Transformar em service
   merge_signal = nh.advertise<std_msgs::UInt8>("merge_signal",5);
   
   
@@ -146,13 +154,23 @@ int main(int argc, char **argv)
 
   if (! private_nh.getParam("x_min",x_min) ) {
     ROS_ERROR("sete o parametro 'x_min'!");
-    return 1;
+    return -1;
   }
 
   if (! private_nh.getParam("x_max",x_max) ) {
     ROS_ERROR("sete o parametro 'x_max'!");
-    return 1;
+    return -1;
 
+  }
+
+  if (! private_nh.getParam("obj_frame",obj_frame) ) {
+    ROS_ERROR("sete o parametro 'obj_frame' !");
+    return -1;
+  }
+
+  if( ! private_nh.getParam("lidar_height",lidar_height)) {
+    ROS_ERROR("sete o parametro 'lidar_height' !");
+    return -1;
   }
   
   tf_buffer = new tf2_ros::Buffer;

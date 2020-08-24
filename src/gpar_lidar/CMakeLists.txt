@@ -182,8 +182,6 @@ add_executable(slider_node src/slider_node.cpp)
 
 # bulk scan
 add_executable(bulk_scan src/bulk_scan.cpp)
-add_executable(bulk_scan2 src/bulk_scan2.cpp)
-add_executable(bulk_scan3 src/bulk_scan3.cpp)
 add_executable(bulk_scan_profiler src/bulk_scan_profiler.cpp)
 
 # utilities
@@ -228,15 +226,6 @@ target_link_libraries(lasertopc2
  #  ${PCL_LIBRARIES}
  )
  
-  target_link_libraries(bulk_scan2
-  ${catkin_LIBRARIES}
- #  ${PCL_LIBRARIES}
- )
- 
-   target_link_libraries(bulk_scan3
-  ${catkin_LIBRARIES}
- #  ${PCL_LIBRARIES}
- )
  
    target_link_libraries(bulk_scan_profiler
   ${catkin_LIBRARIES}

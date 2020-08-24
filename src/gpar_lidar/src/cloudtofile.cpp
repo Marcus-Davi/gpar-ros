@@ -40,6 +40,7 @@ bool save_map(std_srvs::TriggerRequest& req, std_srvs::TriggerResponse& resp){
 		pcl::io::savePCDFileASCII(str_pcd,*cloud); // May be binary
 		ROS_INFO("PCD Saved at %s",str_pcd.c_str());
 		resp.success = true;
+		resp.message = "saved at " + str_pcd;
 		return true;
 }
 
