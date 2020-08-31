@@ -4,6 +4,3 @@
 [submodule "src/sick_scan"]
 	path = src/sick_scan
 	url = git@github.com:Marcus-Davi/sick_scan.git
-[submodule "src/gpar_raspy"]
-	path = src/gpar_raspy
-	url = git@github.com:Marcus-Davi/gpar-raspi.git
