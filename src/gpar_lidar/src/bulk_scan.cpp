@@ -51,6 +51,9 @@ bool start_merge = false;
 // Nuvem Global
 PointCloudT::Ptr cloud_object = boost::make_shared<PointCloudT>();
 
+
+
+// TODO service ?
 void signal_callback(const std_msgs::UInt8ConstPtr msg){
   if(msg->data == 1){
     start_merge = true;
@@ -62,6 +65,7 @@ void signal_callback(const std_msgs::UInt8ConstPtr msg){
 }
 
 
+//TODO aqui basta ser uma nuvem. A juncao das nuvems deve vir de outro node para melhor modularizacao dos programas.
 void top_callback(const sensor_msgs::PointCloud2ConstPtr pc1,const sensor_msgs::PointCloud2ConstPtr pc2){
 if(start_merge){
   ROS_WARN("merging..");
@@ -70,7 +74,7 @@ if(start_merge){
   cloud_object->clear();
 }
 
-ROS_INFO("synced");
+ROS_INFO("BulkScan : synced");
 
 if(!start_merge)
 return;

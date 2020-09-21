@@ -16,6 +16,7 @@
 				<param name="cloud_frame" type="string" value="lidar_top2" />
 		</node>
 				 
+		<!-- lidar longitudial para estimacao da posicao -->
 		<node pkg="gpar_lidar" type="lasertopc2" name="lasertopc2_profiler" output="screen" >
 				<param name="angle_bound" type="double" value="0" />
 				<param name="scan_topic" type="string" value="laser_scan_profiler" />
@@ -24,13 +25,15 @@
 		</node>
 
 		<!-- aqui so serve pra determinar os limites do merge -->
+		<!-- Este node sera responsavel por processar o movimento do objeto -->
+		<!-- Se inscreve na nuvem 'cloud_profiler' -->
 		<node pkg="gpar_lidar" type="bulk_scan_profiler" name="bulk_scan_profiler" output="screen" >
 				<param name="x_min" value="-0.8" />
 				<param name="x_max" value="0.8" />
 				<param name="lidar_height" value="2.5" />
-
 		</node>
 
+		<!-- Este node realiza as transformadas para reconstrucao 3D -->
 		<node pkg="gpar_lidar" type="bulk_scan" name="bulk_scan" output="screen" >
 		<param name="obj_frame" type="string" value="Cuboid" /> <!-- variar aqui! -->
 		</node>

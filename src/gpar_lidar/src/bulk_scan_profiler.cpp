@@ -38,7 +38,7 @@ float x_max;
 PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
 ros::Publisher merge_signal;
 
-std::string obj_frame;
+std::string profiler_frame = "profiler_obj"; // Default profiler frame
 float lidar_height;
 
 
@@ -71,6 +71,9 @@ pcl::fromROSMsg(*pc,*cloud);
 	pfilter.setFilterFieldName("x");
 	pfilter.setFilterLimits(0,lidar_height-0.1); //hardcoded floor
 	pfilter.filter(*cloud_filtered);
+
+
+//TODO ideia -> ICP 2D entre frames, descobre a translacao e filtra
 
   int n = cloud_filtered->size();
   float x_avg = 0;
@@ -120,7 +123,7 @@ geometry_msgs::TransformStamped transformStamped;
 transformStamped.header.stamp = ros::Time::now();
 transformStamped.header.frame_id = "map";
 //TODO parametrizar obj
-transformStamped.child_frame_id = "obj"; 
+transformStamped.child_frame_id = profiler_frame;
 
 tf2::Quaternion q;
 q.setRPY(0,0,0);
@@ -163,9 +166,8 @@ int main(int argc, char **argv)
 
   }
 
-  if (! private_nh.getParam("obj_frame",obj_frame) ) {
-    ROS_ERROR("sete o parametro 'obj_frame' !");
-    return -1;
+  if (! private_nh.getParam("profiler_frame",profiler_frame) ) {
+    ROS_WARN("'profiler_frame' not set. Using default -> %s",profiler_frame.c_str());
   }
 
   if( ! private_nh.getParam("lidar_height",lidar_height)) {
