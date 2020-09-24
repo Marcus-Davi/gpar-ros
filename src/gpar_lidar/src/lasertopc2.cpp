@@ -88,7 +88,7 @@ int main(int argc, char **argv)
   if(!private_nh.getParam("scan_topic",scan_topic_name))
    {
      scan_topic_name = "scan";
-     ROS_WARN("Need to set parameter 'scan_topic_name'.. set to \"%s\"",scan_topic_name.c_str());
+     ROS_WARN("Need to set parameter 'scan_topic'.. set to \"%s\"",scan_topic_name.c_str());
    }
   if(!private_nh.getParam("output_cloud",output_cloud_name))
    {
