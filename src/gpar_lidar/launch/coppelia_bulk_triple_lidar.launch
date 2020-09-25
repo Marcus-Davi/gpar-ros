@@ -26,6 +26,9 @@
 				<param name="cloud_frame" type="string" value="lidar_profiler" />
 		</node>
 
+
+		<!--TODO CRIRAR NODE PARA JUNTAR NUVENS USANDO MESSAGE FILTERS, E GERAR APENAS UMA P/ SAIDA!!! -->
+
 		<!-- aqui so serve pra determinar os limites do merge -->
 		<!-- Este node sera responsavel por processar o movimento do objeto -->
 		<!-- Se inscreve na nuvem 'cloud_profiler' -->
