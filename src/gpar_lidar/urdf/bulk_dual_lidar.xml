@@ -1,21 +1,19 @@
 <robot name="dual_lidar">
-		<link name="lidar_top1" />
-		<link name="lidar_top2" />
-		<link name="lidar_front" />		
-
+		<link name="lidar_top" />
+		<link name="lidar_profiler" />
+		<link name="base_link" />		
 
 
 		<joint name="joint1" type="fixed" >
-				<parent link="lidar_front" />
-				<child link="lidar_top1" />
-				<origin xyz="1.5 0.75 1.5" rpy="0 1.57 0" /> 
+				<parent link="base_link" />
+				<child link="lidar_top" />
+				<origin xyz="0 0.3 4" rpy="0 1.57 0" /> 
 		</joint>
+
 
 		<joint name="joint2" type="fixed" >
-				<parent link="lidar_front" />
-				<child link="lidar_top2" />
-				<origin xyz="1.5 -0.75 1.5" rpy="0 1.57 0" /> 
+				<parent link="base_link" />
+				<child link="lidar_profiler" />
+				<origin xyz="0 0.0 4" rpy="0 1.57 1.57" /> 
 		</joint>
-
-
 </robot>
