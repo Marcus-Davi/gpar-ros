@@ -178,6 +178,7 @@ add_executable(cloud_combinator src/cloud_combinator.cpp)
 
 # application
 add_executable(slider_node src/slider_node.cpp)
+add_executable(slam_icp src/slam_icp.cpp)
 
 
 # bulk scan
