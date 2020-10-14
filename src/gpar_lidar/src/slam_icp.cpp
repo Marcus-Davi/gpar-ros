@@ -8,6 +8,8 @@
 #include <pcl/registration/icp.h>
 #include <pcl/registration/gicp.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/registration/transformation_estimation_2D.h>
+
 
 // ROS Messages
 #include <geometry_msgs/Pose2D.h>
@@ -58,11 +60,13 @@ pcl::transformPointCloud(*input_cloud,*input_cloud,global_transform);
 
 // pcl::transformPointCloud(*input_cloud,*input_cloud,global_transform);
 PointCloudT::Ptr aligned_cloud = boost::make_shared<PointCloudT>();
-pcl::IterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
-// pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
+// pcl::IterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
+pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
+
+
 icp.setInputTarget(map_cloud);
 icp.setInputSource(input_cloud);
-icp.setMaximumIterations(10);
+icp.setMaximumIterations(50);
 icp.align(*aligned_cloud);
 
 //Update pose
@@ -79,21 +83,29 @@ std::cout << "Global: " << global_transform << std::endl;
 
 
 Eigen::Vector3f translation = global_transform.block<3,1>(0,3);
+Eigen::Matrix3f rotation = global_transform.block<3,3>(0,0);
+Eigen::Vector3f rot_vec = rotation.eulerAngles(0,1,2);
+Eigen::Quaternionf rot_quat(rotation);
+
+// std::cout << "rotation = " << rot_vec << std::endl << std::endl;
 
 float dx = translation[0] - update_pose.x;
 float dy = translation[1] - update_pose.y;
-float dt = 0 - update_pose.theta;
+float dt = fabs(rot_vec[2] - update_pose.theta);
 
 float dist = sqrt(dx*dx - dy*dy);
-if(dist > 0.4){
+
+if(dist > 0.4 || dt > 0.1 ){
 	*map_cloud += *aligned_cloud;
+	// voxel.setInputCloud(map_cloud);
+	// voxel.filter(*map_cloud);
 	update_pose.x = translation[0];
 	update_pose.y = translation[1];
+	update_pose.theta = rot_vec[2];
 	ROS_WARN("Updating Map");
 }
 
-Eigen::Matrix3f rotation = global_transform.block<3,3>(0,0);
-std::cout << "rotation = " << rotation.eulerAngles(0,1,2) << std::endl << std::endl;
+
 
 
 //Update transform
@@ -105,10 +117,10 @@ tf_transform.child_frame_id = "cloud";
 tf_transform.transform.translation.x = global_transform(0,3);
 tf_transform.transform.translation.y = global_transform(1,3);
 tf_transform.transform.translation.z = 0;
-tf_transform.transform.rotation.w = 1;
-tf_transform.transform.rotation.x = 0;
-tf_transform.transform.rotation.y = 0;
-tf_transform.transform.rotation.z = 0;
+tf_transform.transform.rotation.w = rot_quat.w();
+tf_transform.transform.rotation.x = rot_quat.x();
+tf_transform.transform.rotation.y = rot_quat.y();
+tf_transform.transform.rotation.z = rot_quat.z();
 br.sendTransform(tf_transform);
 
 
