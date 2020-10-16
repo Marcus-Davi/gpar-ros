@@ -9,6 +9,9 @@
 #include <pcl/registration/gicp.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/transformation_estimation_2D.h>
+#include <pcl/filters/passthrough.h>
+
+#include <pcl/common/distances.h>
 
 
 // ROS Messages
@@ -34,12 +37,22 @@ bool first_cloud = true;
 
 
 void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr& pc_msg){
-ROS_INFO("got cloud!");
+// ROS_INFO("got cloud!");
 
 PointCloudT::Ptr input_cloud = boost::make_shared<PointCloudT>();
 pcl::fromROSMsg<pcl::PointXYZ>(*pc_msg,*input_cloud);
+
+
 pcl::VoxelGrid<pcl::PointXYZ> voxel;	
-voxel.setLeafSize(0.051,0.01,0.01); // 5 cm
+voxel.setLeafSize(0.01,0.01,0.01); // 5 cm
+
+pcl::PassThrough<pcl::PointXYZ> pass;
+pass.setInputCloud(input_cloud);
+pass.setFilterFieldName("x");
+pass.setFilterLimits(0.2,50);
+pass.filter(*input_cloud);
+
+
 if(first_cloud){
 	map_cloud = boost::make_shared<PointCloudT>();
 	*map_cloud = *input_cloud;
@@ -56,7 +69,7 @@ if(first_cloud){
 voxel.setInputCloud(input_cloud);
 voxel.filter(*input_cloud);
 
-pcl::transformPointCloud(*input_cloud,*input_cloud,global_transform);
+// pcl::transformPointCloud(*input_cloud,*input_cloud,global_transform);
 
 // pcl::transformPointCloud(*input_cloud,*input_cloud,global_transform);
 PointCloudT::Ptr aligned_cloud = boost::make_shared<PointCloudT>();
@@ -66,23 +79,24 @@ pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
 
 icp.setInputTarget(map_cloud);
 icp.setInputSource(input_cloud);
+
 // icp.setMaxCorrespondenceDistance(0.2);
+icp.setUseReciprocalCorrespondences(true);
 icp.setMaximumOptimizerIterations(5);
-// icp.setRotationEpsilon(2);
-icp.setMaximumIterations(200);
-icp.align(*aligned_cloud);
+icp.setRotationEpsilon(2);
+icp.setMaximumIterations(20);
+icp.align(*aligned_cloud,global_transform);
 
 //Update pose
  Eigen::Matrix4f current_transform = icp.getFinalTransformation();
 
 std::cout << "Score: " << icp.getFitnessScore() << std::endl;
 
-global_transform = global_transform*current_transform;
+
+global_transform = current_transform;
 
 // std::cout << "Current: " << current_transform << std::endl;
 std::cout << "Global: " << global_transform << std::endl;
-
-
 
 
 Eigen::Vector3f translation = global_transform.block<3,1>(0,3);
