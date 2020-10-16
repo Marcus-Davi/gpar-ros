@@ -39,7 +39,7 @@ ROS_INFO("got cloud!");
 PointCloudT::Ptr input_cloud = boost::make_shared<PointCloudT>();
 pcl::fromROSMsg<pcl::PointXYZ>(*pc_msg,*input_cloud);
 pcl::VoxelGrid<pcl::PointXYZ> voxel;	
-voxel.setLeafSize(0.05,0.05,0.05); // 5 cm
+voxel.setLeafSize(0.051,0.01,0.01); // 5 cm
 if(first_cloud){
 	map_cloud = boost::make_shared<PointCloudT>();
 	*map_cloud = *input_cloud;
@@ -66,13 +66,16 @@ pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
 
 icp.setInputTarget(map_cloud);
 icp.setInputSource(input_cloud);
-icp.setMaximumIterations(50);
+// icp.setMaxCorrespondenceDistance(0.2);
+icp.setMaximumOptimizerIterations(5);
+// icp.setRotationEpsilon(2);
+icp.setMaximumIterations(200);
 icp.align(*aligned_cloud);
 
 //Update pose
  Eigen::Matrix4f current_transform = icp.getFinalTransformation();
 
-std::cout << "Score: " << icp.getFitnessScore() << std::endl;ros::Time::now();
+std::cout << "Score: " << icp.getFitnessScore() << std::endl;
 
 global_transform = global_transform*current_transform;
 
@@ -95,7 +98,7 @@ float dt = fabs(rot_vec[2] - update_pose.theta);
 
 float dist = sqrt(dx*dx - dy*dy);
 
-if(dist > 0.4 || dt > 0.1 ){
+if(dist > 0.4){
 	*map_cloud += *aligned_cloud;
 	// voxel.setInputCloud(map_cloud);
 	// voxel.filter(*map_cloud);
@@ -111,7 +114,7 @@ if(dist > 0.4 || dt > 0.1 ){
 //Update transform
 static tf2_ros::TransformBroadcaster br; //tf Broadcaster
 geometry_msgs::TransformStamped tf_transform;
-tf_transform.header.stamp = ros::Time::now();
+tf_transform.header.stamp = pc_msg->header.stamp;
 tf_transform.header.frame_id = "map";
 tf_transform.child_frame_id = "cloud";
 tf_transform.transform.translation.x = global_transform(0,3);
@@ -126,7 +129,7 @@ br.sendTransform(tf_transform);
 
 sensor_msgs::PointCloud2::Ptr out_msg = boost::make_shared<sensor_msgs::PointCloud2>();
 pcl::toROSMsg(*map_cloud,*out_msg);
-out_msg->header.stamp = ros::Time::now();
+out_msg->header.stamp = pc_msg->header.stamp;
 out_msg->header.frame_id = "map";
 map_cloud_publisher.publish(out_msg);
 
