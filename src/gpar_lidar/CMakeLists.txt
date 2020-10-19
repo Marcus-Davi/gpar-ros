@@ -22,6 +22,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
+find_package(PCL 1.7 COMPONENTS visualization)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -252,7 +254,7 @@ target_link_libraries(cloud_controller_color
 
 target_link_libraries(slam_icp
  ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
+ ${PCL_LIBRARIES}
 )
 
 add_dependencies(cloud_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

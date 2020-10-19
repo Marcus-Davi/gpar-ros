@@ -2,7 +2,7 @@
 <launch>
 
 
-	<node name="slam_icp" pkg="gpar_lidar" type="slam_icp" output="screen" launch-prefix="gnome-terminal --title=slam_icp --" />
+	<node name="slam_icp" pkg="gpar_lidar" type="slam_icp" output="screen" launch-prefix="xterm -e"/>
 	
 	<node name="rosbag" pkg="rosbag" type="play" args="$(find gpar_lidar)/bags/LMS_nanook.bag --pause" output="screen" />
 	

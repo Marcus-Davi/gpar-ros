@@ -10,6 +10,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/transformation_estimation_2D.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/visualization/pcl_visualizer.h>
 
 #include <pcl/common/distances.h>
 
@@ -33,6 +34,11 @@ PointCloudT::Ptr map_cloud;
 Eigen::Matrix4f global_transform = Eigen::Matrix4f::Identity();
 geometry_msgs::Pose2D update_pose;
 
+// Debug Vis
+static pcl::visualization::PCLVisualizer viewer("debug");
+int vp0,vp1;
+
+
 bool first_cloud = true;
 
 
@@ -40,6 +46,7 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr& pc_msg){
 // ROS_INFO("got cloud!");
 
 PointCloudT::Ptr input_cloud = boost::make_shared<PointCloudT>();
+static PointCloudT::Ptr previous_cloud = boost::make_shared<PointCloudT>();
 pcl::fromROSMsg<pcl::PointXYZ>(*pc_msg,*input_cloud);
 
 
@@ -63,29 +70,40 @@ if(first_cloud){
 	voxel.setInputCloud(map_cloud);
 	voxel.filter(*map_cloud);
 	ROS_WARN("Forming Map");
+	//Update
+	*previous_cloud = *input_cloud;
+	
 	
 }
 
 voxel.setInputCloud(input_cloud);
 voxel.filter(*input_cloud);
 
-// pcl::transformPointCloud(*input_cloud,*input_cloud,global_transform);
 
-// pcl::transformPointCloud(*input_cloud,*input_cloud,global_transform);
 PointCloudT::Ptr aligned_cloud = boost::make_shared<PointCloudT>();
 // pcl::IterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
 pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
 
-
+//Incremental alignment
 icp.setInputTarget(map_cloud);
 icp.setInputSource(input_cloud);
 
 // icp.setMaxCorrespondenceDistance(0.2);
-icp.setUseReciprocalCorrespondences(true);
+// icp.setUseReciprocalCorrespondences(true);
 icp.setMaximumOptimizerIterations(5);
-icp.setRotationEpsilon(2);
+// icp.setRotationEpsilon(2);
 icp.setMaximumIterations(20);
 icp.align(*aligned_cloud,global_transform);
+
+viewer.removeAllPointClouds();
+
+viewer.addPointCloud(input_cloud,"target",0);
+viewer.addPointCloud(previous_cloud,"source",vp0);
+viewer.addPointCloud(aligned_cloud,"aligend",vp1);
+viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,1,0,0,"target");
+viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,0,1,0,"source");
+viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,0,0,1,"aligend");
+
 
 //Update pose
  Eigen::Matrix4f current_transform = icp.getFinalTransformation();
@@ -93,9 +111,10 @@ icp.align(*aligned_cloud,global_transform);
 std::cout << "Score: " << icp.getFitnessScore() << std::endl;
 
 
+// global_transform = global_transform*current_transform;
 global_transform = current_transform;
 
-// std::cout << "Current: " << current_transform << std::endl;
+std::cout << "Current: " << current_transform << std::endl;
 std::cout << "Global: " << global_transform << std::endl;
 
 
@@ -140,12 +159,16 @@ tf_transform.transform.rotation.y = rot_quat.y();
 tf_transform.transform.rotation.z = rot_quat.z();
 br.sendTransform(tf_transform);
 
+//Update
+*previous_cloud = *input_cloud;
+
 
 sensor_msgs::PointCloud2::Ptr out_msg = boost::make_shared<sensor_msgs::PointCloud2>();
 pcl::toROSMsg(*map_cloud,*out_msg);
 out_msg->header.stamp = pc_msg->header.stamp;
 out_msg->header.frame_id = "map";
 map_cloud_publisher.publish(out_msg);
+
 
 
 }
@@ -163,7 +186,18 @@ int main(int argc,char** argv){
 	map_cloud_publisher = nh.advertise<sensor_msgs::PointCloud2>("map_cloud",100);
 
 
-	ros::spin();
+	viewer.createViewPort(0,1,0.5,1,vp0);
+	viewer.createViewPort(0.5,0,1,1,vp1);
+	viewer.addCoordinateSystem(1,"ref",0);
+
+	
+	while(ros::ok()){
+
+
+		viewer.spinOnce();
+		ros::spinOnce();
+	}
+	
 
 
 }
