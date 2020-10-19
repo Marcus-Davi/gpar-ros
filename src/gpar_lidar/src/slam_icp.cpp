@@ -56,7 +56,7 @@ voxel.setLeafSize(0.01,0.01,0.01); // 5 cm
 pcl::PassThrough<pcl::PointXYZ> pass;
 pass.setInputCloud(input_cloud);
 pass.setFilterFieldName("x");
-pass.setFilterLimits(0.2,50);
+pass.setFilterLimits(0.2,8);
 pass.filter(*input_cloud);
 
 
@@ -92,13 +92,13 @@ icp.setInputSource(input_cloud);
 // icp.setUseReciprocalCorrespondences(true);
 icp.setMaximumOptimizerIterations(5);
 // icp.setRotationEpsilon(2);
-icp.setMaximumIterations(20);
+icp.setMaximumIterations(50);
 icp.align(*aligned_cloud,global_transform);
 
 viewer.removeAllPointClouds();
 
-viewer.addPointCloud(input_cloud,"target",0);
-viewer.addPointCloud(previous_cloud,"source",vp0);
+viewer.addPointCloud(previous_cloud,"target",0);
+viewer.addPointCloud(input_cloud,"source",vp0);
 viewer.addPointCloud(aligned_cloud,"aligend",vp1);
 viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,1,0,0,"target");
 viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,0,1,0,"source");
@@ -131,7 +131,11 @@ float dt = fabs(rot_vec[2] - update_pose.theta);
 
 float dist = sqrt(dx*dx - dy*dy);
 
-if(dist > 0.4){
+if(dist > 0.4 || dt > 0.1){
+	/// MAPPING
+
+
+
 	*map_cloud += *aligned_cloud;
 	// voxel.setInputCloud(map_cloud);
 	// voxel.filter(*map_cloud);
