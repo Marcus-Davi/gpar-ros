@@ -35,29 +35,37 @@ Eigen::Matrix4f global_transform = Eigen::Matrix4f::Identity();
 geometry_msgs::Pose2D update_pose;
 
 // Debug Vis
-static pcl::visualization::PCLVisualizer viewer("debug");
+static pcl::visualization::PCLVisualizer::Ptr viewer;
 int vp0,vp1;
 
 
 bool first_cloud = true;
+
+// Parameters
+float icp_voxel_res = 0.06;
+float map_voxel_res = 0.03;
 
 
 void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr& pc_msg){
 // ROS_INFO("got cloud!");
 
 PointCloudT::Ptr input_cloud = boost::make_shared<PointCloudT>();
-static PointCloudT::Ptr previous_cloud = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr input_cloud_voxel = boost::make_shared<PointCloudT>();
+
 pcl::fromROSMsg<pcl::PointXYZ>(*pc_msg,*input_cloud);
 
 
-pcl::VoxelGrid<pcl::PointXYZ> voxel;	
-voxel.setLeafSize(0.01,0.01,0.01); // 5 cm
+static pcl::VoxelGrid<pcl::PointXYZ> voxel;	
+voxel.setLeafSize(icp_voxel_res,icp_voxel_res,icp_voxel_res); //preserve voxel
 
-pcl::PassThrough<pcl::PointXYZ> pass;
+static pcl::PassThrough<pcl::PointXYZ> pass;
 pass.setInputCloud(input_cloud);
 pass.setFilterFieldName("x");
-pass.setFilterLimits(0.2,8);
+pass.setFilterLimits(0.2,8); 
 pass.filter(*input_cloud);
+
+voxel.setInputCloud(input_cloud);
+voxel.filter(*input_cloud_voxel);
 
 
 if(first_cloud){
@@ -68,41 +76,44 @@ if(first_cloud){
 	update_pose.y = 0;
 	update_pose.theta = 0;
 	voxel.setInputCloud(map_cloud);
+	voxel.setLeafSize(map_voxel_res,map_voxel_res,map_voxel_res); //preserve voxel
 	voxel.filter(*map_cloud);
 	ROS_WARN("Forming Map");
 	//Update
-	*previous_cloud = *input_cloud;
+	// *previous_cloud = *input_cloud;
 	
 	
 }
 
-voxel.setInputCloud(input_cloud);
-voxel.filter(*input_cloud);
+
 
 
 PointCloudT::Ptr aligned_cloud = boost::make_shared<PointCloudT>();
-// pcl::IterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
-pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
+static pcl::IterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
+static pcl::registration::TransformationEstimation2D<pcl::PointXYZ,pcl::PointXYZ>::Ptr te_2d (new pcl::registration::TransformationEstimation2D<pcl::PointXYZ,pcl::PointXYZ>);
+// pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
 
 //Incremental alignment
 icp.setInputTarget(map_cloud);
-icp.setInputSource(input_cloud);
+icp.setInputSource(input_cloud_voxel);
+icp.setTransformationEstimation(te_2d);
 
-// icp.setMaxCorrespondenceDistance(0.2);
-// icp.setUseReciprocalCorrespondences(true);
-icp.setMaximumOptimizerIterations(5);
+icp.setMaxCorrespondenceDistance(0.1);
+// icp.setMaximumOptimizerIterations(5);
 // icp.setRotationEpsilon(2);
-icp.setMaximumIterations(50);
+icp.setMaximumIterations(90);
+icp.setTransformationEpsilon(1e-7);
 icp.align(*aligned_cloud,global_transform);
 
-viewer.removeAllPointClouds();
 
-viewer.addPointCloud(previous_cloud,"target",0);
-viewer.addPointCloud(input_cloud,"source",vp0);
-viewer.addPointCloud(aligned_cloud,"aligend",vp1);
-viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,1,0,0,"target");
-viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,0,1,0,"source");
-viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,0,0,1,"aligend");
+
+// viewer.removeAllPointClouds();
+// viewer.addPointCloud(previous_cloud,"target",0);
+// viewer.addPointCloud(input_cloud,"source",vp0);
+// viewer.addPointCloud(aligned_cloud,"aligend",vp1);
+// viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,1,0,0,"target");
+// viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,0,1,0,"source");
+// viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR,0,0,1,"aligend");
 
 
 //Update pose
@@ -131,14 +142,16 @@ float dt = fabs(rot_vec[2] - update_pose.theta);
 
 float dist = sqrt(dx*dx - dy*dy);
 
-if(dist > 0.4 || dt > 0.1){
+if(dist > 0.3 || dt > 0.07){
 	/// MAPPING
 
-
-
-	*map_cloud += *aligned_cloud;
-	// voxel.setInputCloud(map_cloud);
-	// voxel.filter(*map_cloud);
+	//Transform full cloud
+	pcl::transformPointCloud(*input_cloud,*input_cloud,icp.getFinalTransformation());
+	*map_cloud += *input_cloud;
+	voxel.setInputCloud(map_cloud);
+	voxel.setLeafSize(map_voxel_res,map_voxel_res,map_voxel_res); //preserve voxel
+	voxel.filter(*map_cloud);
+	
 	update_pose.x = translation[0];
 	update_pose.y = translation[1];
 	update_pose.theta = rot_vec[2];
@@ -164,7 +177,7 @@ tf_transform.transform.rotation.z = rot_quat.z();
 br.sendTransform(tf_transform);
 
 //Update
-*previous_cloud = *input_cloud;
+// *previous_cloud = *input_cloud;
 
 
 sensor_msgs::PointCloud2::Ptr out_msg = boost::make_shared<sensor_msgs::PointCloud2>();
@@ -190,15 +203,16 @@ int main(int argc,char** argv){
 	map_cloud_publisher = nh.advertise<sensor_msgs::PointCloud2>("map_cloud",100);
 
 
-	viewer.createViewPort(0,1,0.5,1,vp0);
-	viewer.createViewPort(0.5,0,1,1,vp1);
-	viewer.addCoordinateSystem(1,"ref",0);
+	// viewer = 
+	// viewer.createViewPort(0,1,0.5,1,vp0);
+	// viewer.createViewPort(0.5,0,1,1,vp1);
+	// viewer.addCoordinateSystem(1,"ref",0);
 
-	
+	// viewer.close();
 	while(ros::ok()){
 
 
-		viewer.spinOnce();
+		// viewer.spinOnce();
 		ros::spinOnce();
 	}
 	
