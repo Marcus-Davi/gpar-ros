@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-
-	<node name="slam_icp" pkg="gpar_lidar" type="slam_icp" output="screen" launch-prefix="xterm -e"/>
+	<node name="my_loam2" pkg="gpar_lidar" type="my_loam2" output="screen" />
 	
 	<node name="rosbag" pkg="rosbag" type="play" args="$(find gpar_lidar)/bags/LMS_nanook.bag --pause" output="screen" />
 	

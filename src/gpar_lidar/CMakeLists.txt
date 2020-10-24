@@ -181,7 +181,9 @@ add_executable(cloud_combinator src/cloud_combinator.cpp)
 
 # application
 add_executable(slider_node src/slider_node.cpp)
-add_executable(slam_icp src/slam_icp.cpp)
+add_executable(lidar_odometry src/loam/lidar_odometry.cpp)
+add_executable(my_loam src/loam/my_loam.cpp)
+add_executable(my_loam2 src/loam/my_loam2.cpp)
 
 
 # bulk scan
@@ -252,9 +254,19 @@ target_link_libraries(cloud_controller_color
 #  ${PCL_LIBRARIES}
 )
 
-target_link_libraries(slam_icp
+target_link_libraries(lidar_odometry
  ${catkin_LIBRARIES}
- ${PCL_LIBRARIES}
+# ${PCL_LIBRARIES}
+)
+
+target_link_libraries(my_loam
+ ${catkin_LIBRARIES}
+# ${PCL_LIBRARIES}
+)
+
+target_link_libraries(my_loam2
+ ${catkin_LIBRARIES}
+# ${PCL_LIBRARIES}
 )
 
 add_dependencies(cloud_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
