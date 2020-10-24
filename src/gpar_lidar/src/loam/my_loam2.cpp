@@ -54,6 +54,7 @@ void timerCallback(const ros::TimerEvent &event)
 	}
 	else if (first_cloud == false)
 	{
+		// Mapping Algorithm here
 		PointCloudT::Ptr aligned_cloud = boost::make_shared<PointCloudT>();
 		static pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 		static pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>::Ptr tf_2d(new pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>);
@@ -64,13 +65,17 @@ void timerCallback(const ros::TimerEvent &event)
 
 		icp.setInputSource(current_cloud);
 		icp.setInputTarget(map_cloud);
+
+		// This is where we can use an estimated guess
 		icp.align(*aligned_cloud, global_transform);
 
 		Eigen::Matrix4f correction_transform = icp.getFinalTransformation();
 		std::cout << "Correction -> " << correction_transform << std::endl;
-		//Smoothing required. KF maybe
+		// Guess is corrected. Use Smoothing
 		global_transform = correction_transform;
 
+
+		//Filtering, Optimizations advised here.
 		*map_cloud += *aligned_cloud;
 		pcl::VoxelGrid<pcl::PointXYZ> voxel;
 		voxel.setInputCloud(map_cloud);
