@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 
   ros::ServiceServer save_service = nh.advertiseService("save_cloud", save_map);
   ros::Subscriber sub_cloud = n.subscribe(cloud_topic, 10, cloud_callback);
-  ROS_WARN("Saved Cloud Reference -> %s", reference.c_str());
+  ROS_WARN("'reference' frame parameter -> %s", reference.c_str());
   ROS_WARN("subscribed to cloud topic %s. use service ~/save_cloud to save the point cloud", cloud_topic.c_str());
   ROS_WARN("Clouds are saved at %s", save_path.c_str());
 

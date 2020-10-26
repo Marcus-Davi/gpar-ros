@@ -1,22 +1,26 @@
 <?xml version="1.0"?>
 <launch>
 
-	<node name="my_loam2" pkg="gpar_lidar" type="my_loam2" output="screen" />
-	
-	<node name="rosbag" pkg="rosbag" type="play" args="$(find gpar_lidar)/bags/LMS_nanook.bag --pause" output="screen" />
-	
-	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_lidar)/rviz/my_icp.rviz" />
-	
-	<node name="cloudtofile_map" type="cloudtofile" pkg="gpar_lidar" >
-	<remap from="cloud" to="map_cloud" />
-	<param name="reference" type="str" value="map" />
-	</node>
-	
-	
-	<node name="cloudtofile_scan" type="cloudtofile" pkg="gpar_lidar" >
-	<remap from="cloud" to="cloud" />
-	<param name="reference" type="str" value="cloud" />
-	</node>	
+		<param name="use_sim_time" value="true" />
+
+		<node name="my_loam2" pkg="gpar_lidar" type="my_loam2" output="screen" >
+				<param name="map_resolution" value="0.02" />
+		</node>
+
+		<node name="rosbag" pkg="rosbag" type="play" args="$(find gpar_lidar)/bags/LMS_nanook.bag --pause --clock" output="screen" />
+
+		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_lidar)/rviz/my_icp.rviz" />
+
+		<node name="cloudtofile_map" type="cloudtofile" pkg="gpar_lidar" >
+				<remap from="cloud" to="map_cloud" />
+				<param name="reference" type="str" value="map" />
+		</node>
+
+
+		<node name="cloudtofile_scan" type="cloudtofile" pkg="gpar_lidar" >
+				<remap from="cloud" to="cloud" />
+				<param name="reference" type="str" value="cloud" />
+		</node>	
 
 </launch>
 
