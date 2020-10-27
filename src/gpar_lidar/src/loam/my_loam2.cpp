@@ -13,7 +13,7 @@
 #include <pcl/registration/transformation_estimation_2D.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/visualization/pcl_visualizer.h>
-
+#include <pcl/search/kdtree.h>
 #include <pcl/common/distances.h>
 
 // ROS Messages
@@ -66,7 +66,7 @@ void timerCallback(const ros::TimerEvent &event)
 		static pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 		// static pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>::Ptr tf_2d(new pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>);
 		// pcl::registration::TransformationEstimationPointToPlaneLLS<pcl::PointXYZ,pcl::PointXYZ>::Ptr tf_3d(new pcl::registration::TransformationEstimationPointToPlaneLLS<pcl::PointXYZ,pcl::PointXYZ>);
-		icp.setMaxCorrespondenceDistance(0.3);
+		icp.setMaxCorrespondenceDistance(0.2);
 		icp.setMaximumIterations(50);
 		icp.setTransformationEpsilon(1e-7);
 		// icp.setTransformationEstimation(tf_2d);
@@ -83,9 +83,26 @@ void timerCallback(const ros::TimerEvent &event)
 		// Guess is corrected. Use Smoothing
 		global_transform = correction_transform;
 
-
+		
 		//Filtering, Optimizations advised here.
-		*map_cloud += *aligned_cloud;
+		pcl::search::KdTree<pcl::PointXYZ> tree;
+		tree.setInputCloud(map_cloud);
+		pcl::Indices k_indices;
+		std::vector<float> distances;
+		pcl::PointCloud<pcl::PointXYZ>::Ptr selected (new pcl::PointCloud<pcl::PointXYZ>);
+		for(int i=0;i<aligned_cloud->size();++i){
+			tree.nearestKSearch(aligned_cloud->points[i],1,k_indices,distances);
+
+			if(distances[0] > 0.001){
+				selected->push_back(aligned_cloud->points[i]); //
+			}
+
+		}
+		*map_cloud += *selected;
+
+
+
+
 		pcl::VoxelGrid<pcl::PointXYZ> voxel;
 		voxel.setInputCloud(map_cloud);
 		voxel.setLeafSize(map_voxel_res, map_voxel_res, map_voxel_res); //preserve voxel
@@ -105,9 +122,9 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 
 	static pcl::PassThrough<pcl::PointXYZ> pass;
 	pass.setInputCloud(input_cloud);
-	// pass.setFilterFieldName("x");
-	// pass.setFilterLimits(0.2, 0.8);
-	// pass.filter(*input_cloud);
+	pass.setFilterFieldName("x");
+	pass.setFilterLimits(0.1, 8);
+	pass.filter(*input_cloud);
 
 	pcl::VoxelGrid<pcl::PointXYZ> voxel;
 	voxel.setInputCloud(input_cloud);
@@ -152,7 +169,7 @@ int main(int argc, char **argv)
 	// pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 	// pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>::Ptr tf_2d(new pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>);
 	icp.setMaxCorrespondenceDistance(0.2);
-	icp.setMaximumIterations(2);
+	icp.setMaximumIterations(40);
 	icp.setTransformationEpsilon(1e-6);
 	// icp.setTransformationEstimation(tf_2d);
 	ros::AsyncSpinner spinner(1);
