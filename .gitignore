@@ -1,4 +1,5 @@
 # ignora
+velodyne.bag
 /devel_isolated/
 /build_isolated/
 .catkin_workspace

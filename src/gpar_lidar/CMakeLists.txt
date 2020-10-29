@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(PCL 1.7 COMPONENTS visualization)
+find_package(OCTOMAP)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -266,6 +267,7 @@ target_link_libraries(my_loam
 
 target_link_libraries(my_loam2
  ${catkin_LIBRARIES}
+ ${OCTOMAP_LIBRARIES}
 # ${PCL_LIBRARIES}
 )
 

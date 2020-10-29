@@ -7,13 +7,12 @@
 #include <tf/transform_listener.h>
 #include <pcl_ros/transforms.h>
 
-#include <gpar_lidar/Commandstr.h>
+#include <std_srvs/Trigger.h>
 
 tf::TransformListener *tf_;
 std::string reference = "map";
 
 std::string save_path;
-std::string node_name;
 
 static sensor_msgs::PointCloud2::Ptr cloud_g = boost::make_shared<sensor_msgs::PointCloud2>();
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudT;
@@ -24,21 +23,13 @@ void cloud_callback(const sensor_msgs::PointCloud2::Ptr cloud)
   cloud_g = cloud;
 }
 
-bool save_map(gpar_lidar::CommandstrRequest &req, gpar_lidar::CommandstrResponse &resp)
+bool save_map(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &resp)
 {
   static PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
   pcl::fromROSMsg(*cloud_g, *cloud);
   try
   {
-	  std::string ref_frame ;
-	if(req.command != "") {
-		ref_frame = req.command;
-	} else {
-		ref_frame = reference;
-	}
-
-	// ROS_WARN("frame = %s",ref_frame.c_str());
-    if (!pcl_ros::transformPointCloud(ref_frame, *cloud, *cloud, *tf_))
+    if (!pcl_ros::transformPointCloud(reference, *cloud, *cloud, *tf_))
     {
       ROS_WARN("TF exception in transformPointCloud!");
       resp.message = "Cant transform";
@@ -57,7 +48,7 @@ bool save_map(gpar_lidar::CommandstrRequest &req, gpar_lidar::CommandstrResponse
   ros::Time time = ros::Time::now();
   std_time = time.sec;
   std::string str_time = std::to_string(time.sec);
-  std::string str_pcd = save_path + node_name + "_" + str_time + ".pcd";
+  std::string str_pcd = save_path + "/points_sweep_" + str_time + ".pcd";
   // pcl::io::savePCDFileBinary(str_pcd,*cloud);
 
   // TODO Verificar exceptions
@@ -95,7 +86,6 @@ int main(int argc, char **argv)
    */
   ros::NodeHandle n;
   ros::NodeHandle nh("~");
-  node_name = ros::this_node::getName();
 
   std::string cloud_topic = n.resolveName("cloud");
 
@@ -111,10 +101,12 @@ int main(int argc, char **argv)
     ROS_WARN("to change save folder, set parameter 'save_folder' to a chosen directory");
     save_path = save_path_default;
   }
+  {
+  }
 
   ros::ServiceServer save_service = nh.advertiseService("save_cloud", save_map);
   ros::Subscriber sub_cloud = n.subscribe(cloud_topic, 10, cloud_callback);
-  ROS_WARN("'reference' frame parameter -> %s", reference.c_str());
+  ROS_WARN("Saved Cloud Reference -> %s", reference.c_str());
   ROS_WARN("subscribed to cloud topic %s. use service ~/save_cloud to save the point cloud", cloud_topic.c_str());
   ROS_WARN("Clouds are saved at %s", save_path.c_str());
 

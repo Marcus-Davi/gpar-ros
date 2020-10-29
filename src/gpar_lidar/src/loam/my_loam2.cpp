@@ -15,6 +15,7 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/common/distances.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 
 // ROS Messages
 #include <geometry_msgs/Pose2D.h>
@@ -30,89 +31,33 @@
 
 #include <mutex>
 
+#include <octomap/octomap.h>
+
+#include "octomap_conversions.h"
+
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudT; // Define a templated type of pointcloud
 
 // Map Publishing
-PointCloudT::Ptr map_cloud;
+
 ros::Publisher map_cloud_publisher;
 
 // Map Parameters
-float map_voxel_res = 0.01;
+double input_voxel_res;
+octomap::OcTree *octmaptree;
+bool use_sor;
 
 //Global transform
 Eigen::Matrix4f global_transform = Eigen::Matrix4f::Identity();
 
 //Odometry variable
 PointCloudT::Ptr current_cloud;
+PointCloudT::Ptr map_cloud;
 
 std::mutex g_lock;
 
 void timerCallback(const ros::TimerEvent &event)
 {
 	static bool first_cloud = true;
-
-	if (first_cloud && (current_cloud->size() > 0))
-	{
-		first_cloud = false;
-		g_lock.lock();
-		*map_cloud += *current_cloud;
-		g_lock.unlock();
-	}
-	else if (first_cloud == false)
-	{
-		// Mapping Algorithm here
-		PointCloudT::Ptr aligned_cloud = boost::make_shared<PointCloudT>();
-		// static pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
-		static pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
-		// static pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>::Ptr tf_2d(new pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>);
-		// pcl::registration::TransformationEstimationPointToPlaneLLS<pcl::PointXYZ,pcl::PointXYZ>::Ptr tf_3d(new pcl::registration::TransformationEstimationPointToPlaneLLS<pcl::PointXYZ,pcl::PointXYZ>);
-		icp.setMaxCorrespondenceDistance(0.2);
-		icp.setMaximumIterations(50);
-		icp.setTransformationEpsilon(1e-7);
-		// icp.setTransformationEstimation(tf_2d);
-
-		icp.setInputSource(current_cloud);
-		icp.setInputTarget(map_cloud);
-
-		// This is where we can use an estimated guess
-		std::cout << "aligning..." << std::endl;
-		icp.align(*aligned_cloud, global_transform);
-
-		Eigen::Matrix4f correction_transform = icp.getFinalTransformation();
-		std::cout << "Correction -> " << correction_transform << std::endl;
-		// Guess is corrected. Use Smoothing
-		global_transform = correction_transform;
-
-		
-		//Filtering, Optimizations advised here.
-		pcl::search::KdTree<pcl::PointXYZ> tree;
-		tree.setInputCloud(map_cloud);
-		pcl::Indices k_indices;
-		std::vector<float> distances;
-		pcl::PointCloud<pcl::PointXYZ>::Ptr selected (new pcl::PointCloud<pcl::PointXYZ>);
-		for(int i=0;i<aligned_cloud->size();++i){
-			tree.nearestKSearch(aligned_cloud->points[i],1,k_indices,distances);
-
-			if(distances[0] > 0.001){
-				selected->push_back(aligned_cloud->points[i]); //
-			}
-
-		}
-		*map_cloud += *selected;
-
-
-
-
-		pcl::VoxelGrid<pcl::PointXYZ> voxel;
-		voxel.setInputCloud(map_cloud);
-		voxel.setLeafSize(map_voxel_res, map_voxel_res, map_voxel_res); //preserve voxel
-		voxel.filter(*map_cloud);
-	}
-
-	sensor_msgs::PointCloud2::Ptr out_msg = boost::make_shared<sensor_msgs::PointCloud2>();
-	pcl::toROSMsg(*map_cloud, *out_msg);
-	out_msg->header.frame_id = "map";
-	map_cloud_publisher.publish(out_msg);
 }
 
 void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
@@ -122,13 +67,29 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 
 	static pcl::PassThrough<pcl::PointXYZ> pass;
 	pass.setInputCloud(input_cloud);
-	pass.setFilterFieldName("x");
-	pass.setFilterLimits(0.1, 8);
+	// pass.setFilterFieldName("x");
+	// pass.setFilterLimits(-20, 20);
+	// // pass.filter(*input_cloud);
+	// pass.setFilterFieldName("y");
+	// // pass.filter(*input_cloud);
+	pass.setFilterLimits(-0.5, 0.5); // hehe
+	pass.setFilterFieldName("z");
 	pass.filter(*input_cloud);
+
+	
+
+	static pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+	if (use_sor)
+	{
+		sor.setInputCloud(input_cloud);
+		sor.setMeanK(50);
+		sor.setStddevMulThresh(1.0);
+		sor.filter(*input_cloud);
+	}
 
 	pcl::VoxelGrid<pcl::PointXYZ> voxel;
 	voxel.setInputCloud(input_cloud);
-	voxel.setLeafSize(map_voxel_res,map_voxel_res,map_voxel_res);
+	voxel.setLeafSize(input_voxel_res, input_voxel_res, input_voxel_res);
 	voxel.filter(*input_cloud);
 
 	g_lock.lock();
@@ -142,69 +103,149 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_private("~");
 
-	nh_private.getParam("map_resolution",map_voxel_res);
+	//Get parameters
+	double map_res;
+	double prob_occ;
+	double prob_free;
+	double prob_thres;
+	int max_icp_it;
+	std::string icp_method;
+	nh_private.getParam("map_resolution", map_res);
+	nh_private.param("prob_occ", prob_occ, 0.9);
+	nh_private.param("prob_free", prob_free, 0.4);
+	nh_private.param("prob_thres", prob_thres, 0.8);
+	nh_private.param("input_voxel_size", input_voxel_res, 0.1);
+	nh_private.param("use_sor", use_sor, false);
+	nh_private.param<std::string>("icp_method", icp_method, "icp");
+	nh_private.param<int>("icp_iterations", max_icp_it, 10);
 
-	ROS_WARN("map resolution -> %f",map_voxel_res);
+	octmaptree = new octomap::OcTree(map_res);
+	octmaptree->setProbHit(prob_occ);
+	octmaptree->setProbMiss(prob_free);
+	octmaptree->setOccupancyThres(prob_thres);
+
+	ROS_WARN("map resolution -> %f", map_res);
+	ROS_WARN("prob_occ -> %f", prob_occ);
+	ROS_WARN("prob_free -> %f", prob_free);
+	ROS_WARN("prob_thres -> %f", prob_thres);
+	ROS_WARN("input_voxel_size -> %f", input_voxel_res);
+	static pcl::Registration<pcl::PointXYZ,pcl::PointXYZ>::Ptr icp;
+
+	if(icp_method == "icp"){
+		icp = boost::make_shared<pcl::IterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ>>();
+		ROS_WARN("using : ICP");
+	} else if(icp_method == "gicp") {
+		ROS_WARN("using : GICP");
+		icp = boost::make_shared<pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ>>();
+	} else {
+		ROS_ERROR("invalid ICP method");
+		ros::shutdown();
+		exit(-1);
+	}
+
+	
 
 	std::string cloud_topic = nh.resolveName("cloud");
 
 	ros::Subscriber cloud_sub = nh.subscribe<sensor_msgs::PointCloud2>(cloud_topic, 100, cloud_callback);
 	map_cloud_publisher = nh.advertise<sensor_msgs::PointCloud2>("map_cloud", 100);
 
-	// Map
-	ros::Timer timer = nh.createTimer(ros::Duration(0.5), timerCallback);
-	map_cloud = boost::make_shared<PointCloudT>();
-	// tf2_ros::Buffer tfBuffer;
-	// tf2_ros::TransformListener tfListener(tfBuffer);
 	static bool first_cloud = true;
 
 	//Odometry variables
 	current_cloud = boost::make_shared<PointCloudT>();
-	PointCloudT::Ptr previous_cloud = boost::make_shared<PointCloudT>();
+	map_cloud = boost::make_shared<PointCloudT>();
 	PointCloudT::Ptr aligned = boost::make_shared<PointCloudT>(); //dummy
-	Eigen::Matrix4f current_transform;
-	ros::Rate rate(20);
+	
+	// PointCloudT::Ptr previous_cloud = boost::make_shared<PointCloudT>();
+	
+	Eigen::Matrix4f global_transform = Eigen::Matrix4f::Identity();
+	ros::Rate rate(5);
 
-	pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+	// pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 	// pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 	// pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>::Ptr tf_2d(new pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>);
-	icp.setMaxCorrespondenceDistance(0.2);
-	icp.setMaximumIterations(40);
-	icp.setTransformationEpsilon(1e-6);
+	// icp.setMaxCorrespondenceDistance(0.2);
+	// icp.setMaximumIterations(1);
+	// icp.setTransformationEpsilon(1e-6);
 	// icp.setTransformationEstimation(tf_2d);
-	ros::AsyncSpinner spinner(1);
-	spinner.start();
+	// ros::AsyncSpinner spinner(1);
+	// spinner.start();
 	// Odometry happens here
 	while (ros::ok())
 	{
-		// ros::spinOnce(); // process callbacks
+		ros::spinOnce();
 
-		//Odometry
-		if (previous_cloud->size() == 0)
+
+		if (first_cloud && (current_cloud->size() > 0))
 		{
+			first_cloud = false;
+			octomap::Pointcloud pc;
+			octomap::point3d origin(0, 0, 0);
 			g_lock.lock();
-			*previous_cloud = *current_cloud;
+			pcl2octopc(*current_cloud, pc);
 			g_lock.unlock();
+			
+			octmaptree->insertPointCloudRays(pc, origin);
+			// octmaptree->insertPointCloudRays(pc, origin);
+			// *map_cloud += *current_cloud;
+			// g_lock.unlock();
 			continue;
 		}
-
-		if (previous_cloud->header.seq == current_cloud->header.seq)
+		else if (first_cloud == false)
 		{
-			continue;
+			// Mapping Algorithm here
+			PointCloudT::Ptr aligned_cloud = boost::make_shared<PointCloudT>();
+			
+			// static pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+			// static pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>::Ptr tf_2d(new pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>);
+			// pcl::registration::TransformationEstimationPointToPlaneLLS<pcl::PointXYZ,pcl::PointXYZ>::Ptr tf_3d(new pcl::registration::TransformationEstimationPointToPlaneLLS<pcl::PointXYZ,pcl::PointXYZ>);
+			icp->setMaxCorrespondenceDistance(0.2);
+			icp->setMaximumIterations(max_icp_it);
+			icp->setTransformationEpsilon(1e-7);
+			// icp->setTransformationEstimation(tf_2d);
+			g_lock.lock();
+			icp->setInputSource(current_cloud); //Scan cloud
+
+			//Convert map_cloud to octomap
+
+			octomap2pcl(*octmaptree, *map_cloud); //get occupied nodes
+
+			icp->setInputTarget(map_cloud);
+
+			// This is where we can use an estimated guess
+			std::cout << "aligning..." << std::endl;
+			icp->align(*aligned_cloud, global_transform);
+			g_lock.unlock();
+
+			global_transform = icp->getFinalTransformation();
+			std::cout << "Correction -> " << global_transform << std::endl;
+			// Guess is corrected. Use Smoothing
+			// global_transform = correction_transform;
+
+			//Filtering, Optimizations advised here
+
+			// Update octomap
+			boost::shared_ptr<octomap::Pointcloud> octomap_pc(new octomap::Pointcloud);
+			pcl2octopc(*aligned_cloud, *octomap_pc);
+			octomap::point3d origin(global_transform(3, 0), global_transform(3, 1), global_transform(3, 2));
+
+			ROS_WARN("inserting ray..");
+			octmaptree->insertPointCloudRays(*octomap_pc, origin, -1, false);
+			// octmaptree->insertPointCloud(*octomap_pc,origin,10,false,true);
+			ROS_WARN("done");
+			ROS_WARN("writing binary...");
+			octmaptree->writeBinary("MAP.bt");
+			ROS_WARN("done");
 		}
 
-		icp.setInputSource(current_cloud);
-		icp.setInputTarget(previous_cloud);
-		ROS_INFO("Odometyr ICP...");
-		icp.align(*aligned);
-		ROS_INFO("Odometyr OK!");
-		
-		current_transform = icp.getFinalTransformation();
-
-		global_transform = global_transform * current_transform;
+		sensor_msgs::PointCloud2::Ptr out_msg = boost::make_shared<sensor_msgs::PointCloud2>();
+		pcl::toROSMsg(*map_cloud, *out_msg);
+		out_msg->header.frame_id = "map";
+		map_cloud_publisher.publish(out_msg);
 
 		Eigen::Matrix3f rotation = global_transform.block<3, 3>(0, 0);
-		Eigen::Vector3f rot_vec = rotation.eulerAngles(0, 1, 2);
+		// Eigen::Vector3f rot_vec = rotation.eulerAngles(0, 1, 2);
 		Eigen::Quaternionf rot_quat(rotation);
 
 		//Update transform
@@ -214,7 +255,8 @@ int main(int argc, char **argv)
 		tf_transform.header.stamp = ros::Time::now();
 		// TODO Make parametrized
 		tf_transform.header.frame_id = "map";
-		tf_transform.child_frame_id = current_cloud->header.frame_id;;
+		tf_transform.child_frame_id = current_cloud->header.frame_id;
+
 		tf_transform.transform.translation.x = global_transform(0, 3);
 		tf_transform.transform.translation.y = global_transform(1, 3);
 		tf_transform.transform.translation.z = 0;
@@ -224,10 +266,10 @@ int main(int argc, char **argv)
 		tf_transform.transform.rotation.z = rot_quat.z();
 		br.sendTransform(tf_transform);
 
-		g_lock.lock();
-		*previous_cloud = *current_cloud;
-		g_lock.unlock();
-		
+		// g_lock.lock();
+		// // *previous_cloud = *current_cloud;
+		// g_lock.unlock();
+
 		rate.sleep();
 	}
 }
