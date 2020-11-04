@@ -1,5 +1,6 @@
 # ignora
 velodyne.bag
+/src/gpar_lidar/bags
 /devel_isolated/
 /build_isolated/
 .catkin_workspace

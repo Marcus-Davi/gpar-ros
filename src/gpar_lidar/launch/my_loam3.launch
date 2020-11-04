@@ -3,20 +3,19 @@
 
 		<param name="use_sim_time" value="true" />
 
-		<node name="my_loam2" pkg="gpar_lidar" type="my_loam2" output="screen" >
-				<param name="map_resolution" value="0.1" />
+		<node name="my_loam" pkg="gpar_lidar" type="my_loam3" output="screen" >
+				<param name="map_resolution" value="0.01" />
 				<param name="prob_occ" value="0.8" />
 				<param name="prob_free" value="0.5" />
 				<param name="prob_thres" value="0.8" />
 				<param name="use_sor" value="false" />
-				<param name="input_voxel_size" value="0.05" />
-				<param name="icp_method" value="gicp" />
-				<param name="icp_iterations" value="20" />
-				<remap from="cloud" to="velodyne_points" />
+				<param name="input_voxel_size" value="0.01" />
+				<param name="icp_method" value="icp" />
+				<param name="icp_iterations" type= "int" value="100" />
+				<!-- <remap from="cloud" to="velodyne_points" /> -->
 		</node>
 
-		
-		<node name="rosbag" pkg="rosbag" type="play" args="$(find gpar_lidar)/bags/velodyne.bag --pause --clock" output="screen" />
+		<node name="rosbag" pkg="rosbag" type="play" args="$(find gpar_lidar)/bags/LMS_nanook.bag --pause --clock" output="screen" />
 
 		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_lidar)/rviz/my_icp.rviz" />
 
@@ -27,7 +26,7 @@
 
 
 		<node name="cloudtofile_scan" type="cloudtofile" pkg="gpar_lidar" >
-				<remap from="cloud" to="velodyne_points" />
+				<remap from="cloud" to="cloud" />
 				<param name="reference" type="str" value="cloud" />
 		</node>	
 

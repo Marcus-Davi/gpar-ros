@@ -74,7 +74,7 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 	// // pass.filter(*input_cloud);
 	pass.setFilterLimits(-0.5, 0.5); // hehe
 	pass.setFilterFieldName("z");
-	pass.filter(*input_cloud);
+	// pass.filter(*input_cloud);
 
 	
 

@@ -183,8 +183,8 @@ add_executable(cloud_combinator src/cloud_combinator.cpp)
 # application
 add_executable(slider_node src/slider_node.cpp)
 add_executable(lidar_odometry src/loam/lidar_odometry.cpp)
-add_executable(my_loam src/loam/my_loam.cpp)
 add_executable(my_loam2 src/loam/my_loam2.cpp)
+add_executable(my_loam3 src/loam/my_loam3.cpp)
 
 
 # bulk scan
@@ -260,12 +260,12 @@ target_link_libraries(lidar_odometry
 # ${PCL_LIBRARIES}
 )
 
-target_link_libraries(my_loam
+target_link_libraries(my_loam2
  ${catkin_LIBRARIES}
+ ${OCTOMAP_LIBRARIES}
 # ${PCL_LIBRARIES}
 )
-
-target_link_libraries(my_loam2
+target_link_libraries(my_loam3
  ${catkin_LIBRARIES}
  ${OCTOMAP_LIBRARIES}
 # ${PCL_LIBRARIES}

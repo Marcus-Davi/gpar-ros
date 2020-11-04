@@ -10,7 +10,8 @@
 #include <std_srvs/Trigger.h>
 
 tf::TransformListener *tf_;
-std::string reference = "map";
+bool has_reference_param = false;
+std::string reference;
 
 std::string save_path;
 
@@ -27,9 +28,16 @@ bool save_map(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &resp)
 {
   static PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
   pcl::fromROSMsg(*cloud_g, *cloud);
+  std::string ref_;
+  if(has_reference_param) {
+    ref_ = reference;
+  } else {
+    ref_ = cloud_g->header.frame_id;
+  }
+  
   try
   {
-    if (!pcl_ros::transformPointCloud(reference, *cloud, *cloud, *tf_))
+    if (!pcl_ros::transformPointCloud(ref_, *cloud, *cloud, *tf_))
     {
       ROS_WARN("TF exception in transformPointCloud!");
       resp.message = "Cant transform";
@@ -89,7 +97,12 @@ int main(int argc, char **argv)
 
   std::string cloud_topic = n.resolveName("cloud");
 
-  nh.getParam("reference", reference);
+  if(! nh.getParam("reference", reference) ){
+    has_reference_param = false;
+    ROS_WARN("Using laser frame of reference");
+  } else {
+    ROS_WARN("Using reference -> %s",reference.c_str());
+  }
 
   //set save folder
   char *home_path = getenv("HOME");
@@ -106,7 +119,7 @@ int main(int argc, char **argv)
 
   ros::ServiceServer save_service = nh.advertiseService("save_cloud", save_map);
   ros::Subscriber sub_cloud = n.subscribe(cloud_topic, 10, cloud_callback);
-  ROS_WARN("Saved Cloud Reference -> %s", reference.c_str());
+  
   ROS_WARN("subscribed to cloud topic %s. use service ~/save_cloud to save the point cloud", cloud_topic.c_str());
   ROS_WARN("Clouds are saved at %s", save_path.c_str());
 
