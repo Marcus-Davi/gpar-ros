@@ -118,10 +118,22 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 			global_transform_2d = global_transform_2d + searchdir;
 			global_transform(0,3) = global_transform_2d[0];
 			global_transform(1,3) = global_transform_2d[1];
-			std::cout << "Estiamte: " << global_transform_2d << std::endl;
+			std::cout << "Estimate: " << global_transform_2d << std::endl;
 
-
-
+			tf2_ros::TransformBroadcaster br;
+			geometry_msgs::TransformStamped transform;
+			transform.child_frame_id = pc_msg->header.frame_id;
+			transform.header.frame_id = "map";
+			transform.header.stamp = ros::Time::now();
+			transform.transform.translation.x = global_transform_2d[0];
+			transform.transform.translation.y = global_transform_2d[1];
+			transform.transform.translation.z = 0;
+			transform.transform.rotation.w = 1;
+			transform.transform.rotation.x = 0;
+			transform.transform.rotation.y = 0;
+			transform.transform.rotation.z = 0;
+			br.sendTransform(transform);
+			ROS_INFO("Tf published ?");
 
 	}
 
