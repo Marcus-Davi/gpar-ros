@@ -48,11 +48,13 @@ octomap::OcTree *octmaptree;
 double g_map_res;
 
 //Global transform
-Eigen::Matrix4f global_transform = Eigen::Matrix4f::Identity();
+Eigen::Matrix4d global_transform = Eigen::Matrix4d::Identity();
+
+Eigen::Vector3d last_up_pose = Eigen::Vector3d::Zero();
 Eigen::Vector3d global_transform_2d = Eigen::Vector3d::Zero();
 
 //Odometry variable
-PointCloudT::Ptr current_cloud;
+PointCloudT::Ptr current_cloud = boost::make_shared<PointCloudT>();
 PointCloudT::Ptr map_cloud;
 
 std::mutex g_lock;
@@ -67,8 +69,9 @@ void timerCallback(const ros::TimerEvent &event)
 void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 {
 	PointCloudT::Ptr input_cloud = boost::make_shared<PointCloudT>();
+
 	pcl::fromROSMsg<pcl::PointXYZ>(*pc_msg, *input_cloud);
-	ROS_INFO("LASER");
+	// ROS_INFO("LASER");
 	if (first_map)
 	{
 		octomap::Pointcloud first_pc;
@@ -78,63 +81,113 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 		g_lock.unlock();
 
 		octmaptree->insertPointCloudRays(first_pc, origin);
+
+		octomap2pcl(*octmaptree, *map_cloud); //get occupied nodes
+
+		sensor_msgs::PointCloud2::Ptr out_msg = boost::make_shared<sensor_msgs::PointCloud2>();
+		pcl::toROSMsg(*map_cloud, *out_msg);
+		out_msg->header.frame_id = "map";
+		map_cloud_publisher.publish(out_msg);
 		first_map = false;
 	}
 	else
 	{
+
 		pcl::PassThrough<pcl::PointXYZ> remover;
 		remover.setInputCloud(input_cloud);
 		remover.setFilterFieldName("x");
-		remover.setFilterLimits(-0.1,0.1);
+		remover.setFilterLimits(-0.01, 0.01); //clear zeros
 		remover.setNegative(true);
 		remover.filter(*input_cloud);
 
-		pcl::transformPointCloud(*input_cloud,*input_cloud,global_transform);
+		g_lock.lock();
+		pcl::copyPointCloud(*input_cloud, *current_cloud);
+		g_lock.unlock();
 
-		Eigen::Matrix<double,1,2> dm;
-		Eigen::Matrix<double,2,3> jac;
-		Eigen::Matrix3d Hessian = Eigen::Matrix3d::Identity(3,3);
+		pcl::transformPointCloud(*input_cloud, *input_cloud, global_transform);
+
+		Eigen::Matrix<double, 1, 2> dm;
+		Eigen::Matrix<double, 2, 3> jac;
+		Eigen::Matrix3d Hessian = Eigen::Matrix3d::Identity(3, 3);
 		Eigen::Vector3d dtr = Eigen::Vector3d::Zero();
-
 
 		double funval;
 		for (int i = 0; i < input_cloud->size(); ++i)
 		{
-			funval = 1 - myslam::mapAccess(*octmaptree,input_cloud->points[i]);
-			dm = myslam::mapGradient<1,2>(*octmaptree,input_cloud->points[i]);
-			jac = myslam::modelGradient<2,3>(input_cloud->points[i],global_transform_2d);
+			pcl::PointXYZ endpoint = input_cloud->points[i]; 
+
+			funval = 1 - myslam::mapAccess(*octmaptree, endpoint);
+
+			dm = myslam::mapGradient<1, 2>(*octmaptree, endpoint); // -12
+			jac = myslam::modelGradient<2, 3>(endpoint, global_transform_2d);
 			// std::cout << "funval = " << funval << std::endl;
 			// std::cout << "dm = " << dm << std::endl;
 			// std::cout << "jac = " << jac << std::endl;
-			dtr = dtr + (dm*jac).transpose()*funval;
-			Hessian = Hessian + (dm*jac).transpose()*(dm*jac);
-
+			dtr = dtr + (dm * jac).transpose() * funval;
+			Hessian = Hessian + (dm * jac).transpose() * (dm * jac);
+			// std::cout << "dtr = " << dtr << std::endl;
+			// std::cout << "Hessian" << Hessian << std::endl;
 		}
-			Eigen::Vector3d searchdir = Eigen::Vector3d::Zero();
-			if(Hessian(0,0) != 0 && Hessian(1,1) != 0){
-			searchdir = Hessian.inverse()*dtr;
-			std::cout << "Search dir = " << searchdir << std::endl;
-			}
-			global_transform_2d = global_transform_2d + searchdir;
-			global_transform(0,3) = global_transform_2d[0];
-			global_transform(1,3) = global_transform_2d[1];
-			std::cout << "Estimate: " << global_transform_2d << std::endl;
+		Eigen::Vector3d searchdir = Eigen::Vector3d::Zero();
+		if (Hessian(0, 0) != 0 && Hessian(1, 1) != 0)
+		{
+			searchdir = Hessian.inverse() * dtr;
+			// std::cout << "Search dir = " << searchdir << std::endl;
+		}
 
-			tf2_ros::TransformBroadcaster br;
-			geometry_msgs::TransformStamped transform;
-			transform.child_frame_id = pc_msg->header.frame_id;
-			transform.header.frame_id = "map";
-			transform.header.stamp = ros::Time::now();
-			transform.transform.translation.x = global_transform_2d[0];
-			transform.transform.translation.y = global_transform_2d[1];
-			transform.transform.translation.z = 0;
-			transform.transform.rotation.w = 1;
-			transform.transform.rotation.x = 0;
-			transform.transform.rotation.y = 0;
-			transform.transform.rotation.z = 0;
-			br.sendTransform(transform);
-			ROS_INFO("Tf published ?");
+		global_transform_2d = global_transform_2d + searchdir; // Update
 
+
+		global_transform(0, 3) = global_transform_2d[0];
+		global_transform(1, 3) = global_transform_2d[1];
+		global_transform(2, 3) = 0;
+
+		Eigen::Quaterniond q;
+		q = Eigen::AngleAxisd(global_transform_2d[2], Eigen::Vector3d::UnitZ()); //
+		Eigen::Matrix3d m = q.normalized().toRotationMatrix();
+		global_transform.block<3, 3>(0, 0) = m;
+
+		std::cout << "Estimate: " << global_transform_2d << std::endl;
+		std::cout << "Matrix: " << global_transform << std::endl;
+
+		//Map update
+		double dist = (global_transform_2d[0] - last_up_pose[0]) * (global_transform_2d[0] - last_up_pose[0]) + (global_transform_2d[1] - last_up_pose[1]) * (global_transform_2d[1] - last_up_pose[1]);
+		double d_angle = global_transform_2d[2] - last_up_pose[2];
+
+		std::cout << "dist = " << dist << std::endl;
+		std::cout << "d_angle = " << d_angle << std::endl;
+
+		if (dist > 0.4 || d_angle > 0.06)
+		{
+			last_up_pose = global_transform_2d;
+			std::cout << "Update" << std::endl;
+			octomap::Pointcloud octo_pc;
+			pcl2octopc(*input_cloud, octo_pc);
+			octomap::point3d sensor_origin(global_transform_2d[0], global_transform_2d[1], 0);
+			octmaptree->insertPointCloudRays(octo_pc, sensor_origin);
+
+			octomap2pcl(*octmaptree, *map_cloud); //get occupied nodes
+
+			sensor_msgs::PointCloud2::Ptr out_msg = boost::make_shared<sensor_msgs::PointCloud2>();
+			pcl::toROSMsg(*map_cloud, *out_msg);
+			out_msg->header.frame_id = "map";
+			map_cloud_publisher.publish(out_msg);
+		}
+
+		// tf2_ros::TransformBroadcaster br;
+		// geometry_msgs::TransformStamped transform;
+		// transform.child_frame_id = "cloud";
+		// transform.header.frame_id = "map";
+		// transform.header.stamp = ros::Time::now();
+		// transform.transform.translation.x = global_transform_2d[0];
+		// transform.transform.translation.y = global_transform_2d[1];
+		// transform.transform.translation.z = 0;
+		// transform.transform.rotation.w = q.w();
+		// transform.transform.rotation.x = q.x();
+		// transform.transform.rotation.y = q.y();
+		// transform.transform.rotation.z = q.z();
+		// br.sendTransform(transform);
+		// ROS_INFO("Tf published ?");
 	}
 
 	//Process input cloud
@@ -182,23 +235,58 @@ int main(int argc, char **argv)
 	ros::Subscriber cloud_sub = nh.subscribe<sensor_msgs::PointCloud2>(cloud_topic, 100, cloud_callback);
 	map_cloud_publisher = nh.advertise<sensor_msgs::PointCloud2>("map_cloud", 100);
 
-	ros::Rate r(1);
-	ros::AsyncSpinner spinner(1);
+	ros::Rate loop(10);
+	ros::AsyncSpinner spinner(2);
 	spinner.start();
+
+	// ros::waitForShutdown();
+	// exit(0);
 
 	while (ros::ok())
 	{
 		// ros::spinOnce();
 
-		octomap2pcl(*octmaptree, *map_cloud); //get occupied nodes
+		// g_lock.lock();
+		// pcl::transformPointCloud(*current_cloud,*current_cloud,global_transform);
+		// g_lock.unlock();
 
-		sensor_msgs::PointCloud2::Ptr out_msg = boost::make_shared<sensor_msgs::PointCloud2>();
-		pcl::toROSMsg(*map_cloud, *out_msg);
-		out_msg->header.frame_id = "map";
-		map_cloud_publisher.publish(out_msg);
+		// octomap::Pointcloud octo_pc;
 
-		ROS_WARN("Updating map...");
+		// g_lock.lock();
+		// pcl2octopc(*current_cloud,octo_pc);
+		// g_lock.unlock();
+		// octomap::point3d sensor_pose(global_transform(0,3),global_transform(1,3),0);
+		// // octomap::point3d sensor_pose(0,0,0);
+		// // octmaptree->insertPointCloudRays(octo_pc,sensor_pose);
 
-		r.sleep();
+		// octomap2pcl(*octmaptree, *map_cloud); //get occupied nodes
+
+		// sensor_msgs::PointCloud2::Ptr out_msg = boost::make_shared<sensor_msgs::PointCloud2>();
+		// pcl::toROSMsg(*map_cloud, *out_msg);
+		// out_msg->header.frame_id = "map";
+		// map_cloud_publisher.publish(out_msg);
+
+		// ROS_WARN("Updating map...");
+
+		static tf2_ros::TransformBroadcaster broad;
+		geometry_msgs::TransformStamped tf;
+		tf.header.stamp = ros::Time::now();
+		tf.header.frame_id = "map";
+		tf.child_frame_id = "cloud";
+		tf.transform.translation.x = global_transform_2d[0];
+		tf.transform.translation.y = global_transform_2d[1];
+		tf.transform.translation.z = 0;
+		Eigen::Quaterniond q;
+		q = Eigen::AngleAxisd(global_transform_2d[2], Eigen::Vector3d::UnitZ());
+		tf.transform.rotation.w = q.w();
+		tf.transform.rotation.x = q.x();
+		tf.transform.rotation.y = q.y();
+		tf.transform.rotation.z = q.z();
+
+		// std::cout << "x = " << tf.transform.translation.x << std::endl;
+		// std::cout << "y = " << tf.transform.translation.y << std::endl;
+		broad.sendTransform(tf);
+
+		loop.sleep();
 	}
 }
