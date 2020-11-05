@@ -1,3 +1,6 @@
+#ifndef OCTOMAP_CONVERSIONS_H
+#define OCTOMAP_CONVERSIONS_H
+
 #include <octomap/octomap.h>
 #include <pcl/point_cloud.h>
 
@@ -23,3 +26,6 @@ static inline void pcl2octopc(const pcl::PointCloud<pcl::PointXYZ> &pc, octomap:
 			octo_pc.push_back(pt);
 		}
 }
+
+
+#endif

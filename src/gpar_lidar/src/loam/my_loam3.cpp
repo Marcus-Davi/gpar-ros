@@ -32,7 +32,9 @@
 #include <mutex>
 
 #include <octomap/octomap.h>
+
 #include "octomap_conversions.h"
+#include "gridslam.h"
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudT; // Define a templated type of pointcloud
 
@@ -47,6 +49,7 @@ double g_map_res;
 
 //Global transform
 Eigen::Matrix4f global_transform = Eigen::Matrix4f::Identity();
+Eigen::Vector3d global_transform_2d = Eigen::Vector3d::Zero();
 
 //Odometry variable
 PointCloudT::Ptr current_cloud;
@@ -79,23 +82,47 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 	}
 	else
 	{
+		pcl::PassThrough<pcl::PointXYZ> remover;
+		remover.setInputCloud(input_cloud);
+		remover.setFilterFieldName("x");
+		remover.setFilterLimits(-0.1,0.1);
+		remover.setNegative(true);
+		remover.filter(*input_cloud);
+
+		pcl::transformPointCloud(*input_cloud,*input_cloud,global_transform);
+
+		Eigen::Matrix<double,1,2> dm;
+		Eigen::Matrix<double,2,3> jac;
+		Eigen::Matrix3d Hessian = Eigen::Matrix3d::Identity(3,3);
+		Eigen::Vector3d dtr = Eigen::Vector3d::Zero();
+
+
+		double funval;
 		for (int i = 0; i < input_cloud->size(); ++i)
 		{
-			octomap::point3d pt(input_cloud->points[i].x, input_cloud->points[i].y, input_cloud->points[i].z);
-			octomap::point3d pt_right(pt.x() + g_map_res, pt.y(), pt.z());
-			octomap::point3d pt_left(pt.x() - g_map_res, pt.y(), pt.z());
-			octomap::point3d pt_top(pt.x(), pt.y() + g_map_res, pt.z());
-			octomap::point3d pt_down(pt.x(), pt.y() - g_map_res, pt.z());
-			octomap::OcTreeNode *node_rig = octmaptree->search(pt_right);
-			octomap::OcTreeNode *node_lef = octmaptree->search(pt_left);
-			octomap::OcTreeNode *node_top = octmaptree->search(pt_top);
-			octomap::OcTreeNode *node_bot = octmaptree->search(pt_down);
+			funval = 1 - myslam::mapAccess(*octmaptree,input_cloud->points[i]);
+			dm = myslam::mapGradient<1,2>(*octmaptree,input_cloud->points[i]);
+			jac = myslam::modelGradient<2,3>(input_cloud->points[i],global_transform_2d);
+			// std::cout << "funval = " << funval << std::endl;
+			// std::cout << "dm = " << dm << std::endl;
+			// std::cout << "jac = " << jac << std::endl;
+			dtr = dtr + (dm*jac).transpose()*funval;
+			Hessian = Hessian + (dm*jac).transpose()*(dm*jac);
 
-			ROS_INFO("occ-> %f,%f,%f,%f", node_rig->getOccupancy(),
-					 node_lef->getOccupancy(),
-					 node_top->getOccupancy(),
-					 node_bot->getOccupancy());
 		}
+			Eigen::Vector3d searchdir = Eigen::Vector3d::Zero();
+			if(Hessian(0,0) != 0 && Hessian(1,1) != 0){
+			searchdir = Hessian.inverse()*dtr;
+			std::cout << "Search dir = " << searchdir << std::endl;
+			}
+			global_transform_2d = global_transform_2d + searchdir;
+			global_transform(0,3) = global_transform_2d[0];
+			global_transform(1,3) = global_transform_2d[1];
+			std::cout << "Estiamte: " << global_transform_2d << std::endl;
+
+
+
+
 	}
 
 	//Process input cloud
