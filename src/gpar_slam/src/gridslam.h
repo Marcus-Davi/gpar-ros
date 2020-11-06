@@ -8,6 +8,16 @@
 namespace myslam
 {
 
+    static inline void TransformEndpoint(pcl::PointXYZ& pt, const Eigen::Vector3d& transform){
+        double rx = cos(transform[2])*pt.x - sin(transform[2])*pt.y;
+        double ry = sin(transform[2])*pt.x + cos(transform[2])*pt.y;
+
+        pt.x = rx + transform[0];
+        pt.y = ry + transform[1];
+
+
+    }
+
     static inline double mapAccess(const octomap::OcTree &tree, pcl::PointXYZ endpoint)
     {
         octomap::point3d pt(endpoint.x, endpoint.y, endpoint.z);
@@ -25,7 +35,7 @@ namespace myslam
         octomap::OcTreeNode *node_11 = tree.search(key_p11);
         octomap::OcTreeNode *node_01 = tree.search(key_p01);
 
-        double p00 = 0.5, p01 = 0.5, p10 = 0.5, p11 = 0.5;
+        double p00 = 0.4, p01 = 0.4, p10 = 0.4, p11 = 0.4;
         if (node_00)
             p00 = node_00->getOccupancy();
 
@@ -75,7 +85,7 @@ namespace myslam
         octomap::OcTreeNode *node_11 = tree.search(key_p11);
         octomap::OcTreeNode *node_01 = tree.search(key_p01);
 
-        double p00 = 0.5, p01 = 0.5, p10 = 0.5, p11 = 0.5;
+        double p00 = 0.4, p01 = 0.4, p10 = 0.4, p11 = 0.4;
         if (node_00)
             p00 = node_00->getOccupancy();
 

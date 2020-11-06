@@ -92,17 +92,17 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 	}
 	else
 	{
+		Eigen::Quaterniond q;
+		// pcl::PassThrough<pcl::PointXYZ> remover;
+		// remover.setInputCloud(input_cloud);
+		// remover.setFilterFieldName("x");
+		// remover.setFilterLimits(-0.01, 0.01); //clear zeros
+		// remover.setNegative(true);
+		// remover.filter(*input_cloud);
 
-		pcl::PassThrough<pcl::PointXYZ> remover;
-		remover.setInputCloud(input_cloud);
-		remover.setFilterFieldName("x");
-		remover.setFilterLimits(-0.01, 0.01); //clear zeros
-		remover.setNegative(true);
-		remover.filter(*input_cloud);
-
-		g_lock.lock();
-		pcl::copyPointCloud(*input_cloud, *current_cloud);
-		g_lock.unlock();
+		// g_lock.lock();
+		// pcl::copyPointCloud(*input_cloud, *current_cloud);
+		// g_lock.unlock();
 
 		pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_tf = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
@@ -112,16 +112,20 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 		Eigen::Vector3d dtr = Eigen::Vector3d::Zero();
 
 		double funval;
-		int maxIt = 3;
+		int maxIt = 5;
+		
 		auto start = std::chrono::high_resolution_clock::now();
 		for (int j = 0; j < maxIt; ++j)
 		{
 
 			pcl::transformPointCloud(*input_cloud, *input_cloud_tf, global_transform);
+			std::cout << "pts -> " << input_cloud_tf->size() << std::endl;
 
-			for (int i = 0; i < input_cloud_tf->size(); ++i)
+			for (int i = 0; i < input_cloud->size(); ++i)
 			{
 				pcl::PointXYZ endpoint = input_cloud_tf->points[i];
+
+				// myslam::TransformEndpoint(endpoint,global_transform_2d);
 
 				funval = 1 - myslam::mapAccess(*octmaptree, endpoint);
 
@@ -149,7 +153,6 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 			global_transform(1, 3) = global_transform_2d[1];
 			global_transform(2, 3) = 0;
 
-			Eigen::Quaterniond q;
 			q = Eigen::AngleAxisd(global_transform_2d[2], Eigen::Vector3d::UnitZ()); //
 			Eigen::Matrix3d m = q.normalized().toRotationMatrix();
 			global_transform.block<3, 3>(0, 0) = m;
@@ -160,20 +163,27 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 		std::cout << "Time : " << duration.count() << " ms" << std::endl;
 
 		std::cout << "Estimate: " << global_transform_2d << std::endl;
-		std::cout << "Matrix: " << global_transform << std::endl;
+		// std::cout << "Matrix: " << global_transform << std::endl;
 
 		//Map update
 		double dist = (global_transform_2d[0] - last_up_pose[0]) * (global_transform_2d[0] - last_up_pose[0]) + (global_transform_2d[1] - last_up_pose[1]) * (global_transform_2d[1] - last_up_pose[1]);
-		double d_angle = global_transform_2d[2] - last_up_pose[2];
+		double d_angle = fabs(global_transform_2d[2] - last_up_pose[2]);
+
+		if (d_angle > M_PI)
+			d_angle = d_angle - M_PI * 2.0;
+		else if (d_angle < -M_PI)
+			d_angle = d_angle + M_PI * 2.0;
+		d_angle = abs(d_angle);
 
 		std::cout << "dist = " << dist << std::endl;
 		std::cout << "d_angle = " << d_angle << std::endl;
 
-		if (dist > 0.4 || d_angle > 0.2)
+		if (dist > 0.4 || d_angle > 0.05)
 		{
 			last_up_pose = global_transform_2d;
 			std::cout << "Update" << std::endl;
 			octomap::Pointcloud octo_pc;
+
 			pcl2octopc(*input_cloud_tf, octo_pc);
 			octomap::point3d sensor_origin(global_transform_2d[0], global_transform_2d[1], 0);
 			octmaptree->insertPointCloudRays(octo_pc, sensor_origin);
@@ -247,7 +257,7 @@ int main(int argc, char **argv)
 	ros::Subscriber cloud_sub = nh.subscribe<sensor_msgs::PointCloud2>(cloud_topic, 5, cloud_callback);
 	map_cloud_publisher = nh.advertise<sensor_msgs::PointCloud2>("map_cloud", 5);
 
-	ros::Rate loop(10);
+	ros::Rate loop(20);
 	ros::AsyncSpinner spinner(2);
 	spinner.start();
 
@@ -285,8 +295,8 @@ int main(int argc, char **argv)
 		tf.header.stamp = ros::Time::now();
 		tf.header.frame_id = "map";
 		tf.child_frame_id = "cloud";
-		tf.transform.translation.x = global_transform_2d[0];
-		tf.transform.translation.y = global_transform_2d[1];
+		tf.transform.translation.x = global_transform(0,3);
+		tf.transform.translation.y = global_transform(1,3);
 		tf.transform.translation.z = 0;
 		Eigen::Quaterniond q;
 		q = Eigen::AngleAxisd(global_transform_2d[2], Eigen::Vector3d::UnitZ());
@@ -295,8 +305,8 @@ int main(int argc, char **argv)
 		tf.transform.rotation.y = q.y();
 		tf.transform.rotation.z = q.z();
 
-		// std::cout << "x = " << tf.transform.translation.x << std::endl;
-		// std::cout << "y = " << tf.transform.translation.y << std::endl;
+		std::cout << "x = " << tf.transform.translation.x << std::endl;
+		std::cout << "y = " << tf.transform.translation.y << std::endl;
 		broad.sendTransform(tf);
 
 		loop.sleep();
