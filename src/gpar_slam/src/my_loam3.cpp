@@ -104,7 +104,7 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 		pcl::copyPointCloud(*input_cloud, *current_cloud);
 		g_lock.unlock();
 
-		pcl::transformPointCloud(*input_cloud, *input_cloud, global_transform);
+		pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_tf = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
 		Eigen::Matrix<double, 1, 2> dm;
 		Eigen::Matrix<double, 2, 3> jac;
@@ -112,40 +112,52 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 		Eigen::Vector3d dtr = Eigen::Vector3d::Zero();
 
 		double funval;
-		for (int i = 0; i < input_cloud->size(); ++i)
+		int maxIt = 3;
+		auto start = std::chrono::high_resolution_clock::now();
+		for (int j = 0; j < maxIt; ++j)
 		{
-			pcl::PointXYZ endpoint = input_cloud->points[i]; 
 
-			funval = 1 - myslam::mapAccess(*octmaptree, endpoint);
+			pcl::transformPointCloud(*input_cloud, *input_cloud_tf, global_transform);
 
-			dm = myslam::mapGradient<1, 2>(*octmaptree, endpoint); // -12
-			jac = myslam::modelGradient<2, 3>(endpoint, global_transform_2d);
-			// std::cout << "funval = " << funval << std::endl;
-			// std::cout << "dm = " << dm << std::endl;
-			// std::cout << "jac = " << jac << std::endl;
-			dtr = dtr + (dm * jac).transpose() * funval;
-			Hessian = Hessian + (dm * jac).transpose() * (dm * jac);
-			// std::cout << "dtr = " << dtr << std::endl;
-			// std::cout << "Hessian" << Hessian << std::endl;
+			for (int i = 0; i < input_cloud_tf->size(); ++i)
+			{
+				pcl::PointXYZ endpoint = input_cloud_tf->points[i];
+
+				funval = 1 - myslam::mapAccess(*octmaptree, endpoint);
+
+				dm = myslam::mapGradient<1, 2>(*octmaptree, endpoint); // -12
+				jac = myslam::modelGradient<2, 3>(endpoint, global_transform_2d);
+				// std::cout << "funval = " << funval << std::endl;
+				// std::cout << "dm = " << dm << std::endl;
+				// std::cout << "jac = " << jac << std::endl;
+				dtr = dtr + (dm * jac).transpose() * funval;
+				Hessian = Hessian + (dm * jac).transpose() * (dm * jac);
+				// std::cout << "dtr = " << dtr << std::endl;
+				// std::cout << "Hessian" << Hessian << std::endl;
+			}
+			Eigen::Vector3d searchdir = Eigen::Vector3d::Zero();
+			if (Hessian(0, 0) != 0 && Hessian(1, 1) != 0)
+			{
+				searchdir = Hessian.inverse() * dtr;
+				std::cout << "Search dir = " << searchdir << std::endl;
+				std::cout << "Hessian dir = " << Hessian << std::endl;
+			}
+
+			global_transform_2d = global_transform_2d + searchdir; // Update
+
+			global_transform(0, 3) = global_transform_2d[0];
+			global_transform(1, 3) = global_transform_2d[1];
+			global_transform(2, 3) = 0;
+
+			Eigen::Quaterniond q;
+			q = Eigen::AngleAxisd(global_transform_2d[2], Eigen::Vector3d::UnitZ()); //
+			Eigen::Matrix3d m = q.normalized().toRotationMatrix();
+			global_transform.block<3, 3>(0, 0) = m;
 		}
-		Eigen::Vector3d searchdir = Eigen::Vector3d::Zero();
-		if (Hessian(0, 0) != 0 && Hessian(1, 1) != 0)
-		{
-			searchdir = Hessian.inverse() * dtr;
-			// std::cout << "Search dir = " << searchdir << std::endl;
-		}
+		auto end = std::chrono::high_resolution_clock::now();
 
-		global_transform_2d = global_transform_2d + searchdir; // Update
-
-
-		global_transform(0, 3) = global_transform_2d[0];
-		global_transform(1, 3) = global_transform_2d[1];
-		global_transform(2, 3) = 0;
-
-		Eigen::Quaterniond q;
-		q = Eigen::AngleAxisd(global_transform_2d[2], Eigen::Vector3d::UnitZ()); //
-		Eigen::Matrix3d m = q.normalized().toRotationMatrix();
-		global_transform.block<3, 3>(0, 0) = m;
+		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+		std::cout << "Time : " << duration.count() << " ms" << std::endl;
 
 		std::cout << "Estimate: " << global_transform_2d << std::endl;
 		std::cout << "Matrix: " << global_transform << std::endl;
@@ -157,12 +169,12 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 		std::cout << "dist = " << dist << std::endl;
 		std::cout << "d_angle = " << d_angle << std::endl;
 
-		if (dist > 0.4 || d_angle > 0.06)
+		if (dist > 0.4 || d_angle > 0.2)
 		{
 			last_up_pose = global_transform_2d;
 			std::cout << "Update" << std::endl;
 			octomap::Pointcloud octo_pc;
-			pcl2octopc(*input_cloud, octo_pc);
+			pcl2octopc(*input_cloud_tf, octo_pc);
 			octomap::point3d sensor_origin(global_transform_2d[0], global_transform_2d[1], 0);
 			octmaptree->insertPointCloudRays(octo_pc, sensor_origin);
 
@@ -232,8 +244,8 @@ int main(int argc, char **argv)
 	map_cloud = boost::make_shared<PointCloudT>();
 
 	std::string cloud_topic = nh.resolveName("cloud");
-	ros::Subscriber cloud_sub = nh.subscribe<sensor_msgs::PointCloud2>(cloud_topic, 100, cloud_callback);
-	map_cloud_publisher = nh.advertise<sensor_msgs::PointCloud2>("map_cloud", 100);
+	ros::Subscriber cloud_sub = nh.subscribe<sensor_msgs::PointCloud2>(cloud_topic, 5, cloud_callback);
+	map_cloud_publisher = nh.advertise<sensor_msgs::PointCloud2>("map_cloud", 5);
 
 	ros::Rate loop(10);
 	ros::AsyncSpinner spinner(2);

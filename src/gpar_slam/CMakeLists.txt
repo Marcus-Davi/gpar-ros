@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(gpar_lidar)
+cmake_minimum_required(VERSION 3.0.2)
+project(gpar_slam)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -10,19 +10,14 @@ project(gpar_lidar)
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   roscpp
+  rospy
   tf2
   tf2_ros
   tf2_msgs
-  tf2_sensor_msgs
-  sensor_msgs
-  sick_ldmrs_msgs
-  laser_geometry
   pcl_conversions
   pcl_ros
-  message_generation
 )
 
-find_package(PCL 1.7 COMPONENTS visualization)
 find_package(OCTOMAP)
 
 ## System dependencies are found with CMake's conventions
@@ -72,12 +67,6 @@ find_package(OCTOMAP)
 #   Service2.srv
 # )
 
-add_service_files(
- FILES
- Command.srv #cloudcontroller
- Commandstr.srv #cloudtofile
-)
-
 ## Generate actions in the 'action' folder
 # add_action_files(
 #   FILES
@@ -88,13 +77,8 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
-
- generate_messages(
-   DEPENDENCIES
-   std_msgs
-)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -127,8 +111,8 @@ add_service_files(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES gpar_lidar
-#  CATKIN_DEPENDS roscpp std_msgs
+#  LIBRARIES gpar_slam
+#  CATKIN_DEPENDS roscpp rospy
 #  DEPENDS system_lib
 )
 
@@ -145,7 +129,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/gpar_lidar.cpp
+#   src/${PROJECT_NAME}/gpar_slam.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -156,7 +140,12 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/gpar_lidar_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/gpar_slam_node.cpp)
+
+# application
+add_executable(lidar_odometry src/lidar_odometry.cpp)
+add_executable(my_loam2 src/my_loam2.cpp)
+add_executable(my_loam3 src/my_loam3.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -174,88 +163,21 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
-#cloud controller
-add_executable(cloud_controller src/cloud_controller.cpp)
-add_executable(cloud_controller_lms src/cloud_controller_lms.cpp)
-add_executable(cloud_controller_color src/cloud_controller_color.cpp)
-add_executable(cloud_combinator src/cloud_combinator.cpp)
-
-# apps
-add_executable(slider_node src/slider_node.cpp)
-
-# bulk scan
-add_executable(bulk_scan src/bulk_scan.cpp)
-add_executable(bulk_scan_profiler src/bulk_scan_profiler.cpp)
-
-# utilities
-add_executable(maptocloud src/maptocloud.cpp)
-add_executable(filetocloud src/filetocloud.cpp)
-add_executable(cloudtofile src/cloudtofile.cpp)
-add_executable(lasertopc2 src/lasertopc2.cpp)
-
-
-target_link_libraries(filetocloud
+target_link_libraries(lidar_odometry
  ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
+# ${PCL_LIBRARIES}
 )
 
-
-target_link_libraries(cloud_combinator
+target_link_libraries(my_loam2
  ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
+ ${OCTOMAP_LIBRARIES}
+# ${PCL_LIBRARIES}
 )
-
-target_link_libraries(cloud_controller
+target_link_libraries(my_loam3
  ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
+ ${OCTOMAP_LIBRARIES}
+# ${PCL_LIBRARIES}
 )
-
-target_link_libraries(slider_node
- ${catkin_LIBRARIES}
-)
-
-target_link_libraries(cloud_controller_lms
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(lasertopc2
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
- target_link_libraries(bulk_scan
-  ${catkin_LIBRARIES}
- #  ${PCL_LIBRARIES}
- )
- 
- 
-   target_link_libraries(bulk_scan_profiler
-  ${catkin_LIBRARIES}
- #  ${PCL_LIBRARIES}
- )
-
-
-target_link_libraries(maptocloud
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(cloudtofile
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-target_link_libraries(cloud_controller_color
- ${catkin_LIBRARIES}
-#  ${PCL_LIBRARIES}
-)
-
-
-add_dependencies(cloud_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(cloud_controller_lms ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(cloud_controller_color ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(slider_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -266,7 +188,7 @@ add_dependencies(slider_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORT
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
+# catkin_install_python(PROGRAMS
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
@@ -304,7 +226,7 @@ add_dependencies(slider_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORT
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_gpar_lidar.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_gpar_slam.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

@@ -3,13 +3,13 @@
 
 		<param name="use_sim_time" value="true" />
 
-		<node name="my_loam" pkg="gpar_lidar" type="my_loam3" output="screen" >
-		<param name="map_resolution" value="0.1" />
+		<node name="my_loam" pkg="gpar_slam" type="my_loam3" output="screen" >
+		<param name="map_resolution" value="0.05" />
 		</node>
 
-		<node name="rosbag" pkg="rosbag" type="play" args="$(find gpar_lidar)/bags/LMS_nanook.bag --pause --clock" output="screen" />
+		<node name="rosbag" pkg="rosbag" type="play" args="$(find gpar_slam)/bags/LMS_nanook.bag --pause --clock" output="screen" />
 
-		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_lidar)/rviz/my_icp.rviz" />
+		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_slam)/rviz/myslam.rviz" />
 
 		<node name="cloudtofile_map" type="cloudtofile" pkg="gpar_lidar" >
 				<remap from="cloud" to="map_cloud" />
