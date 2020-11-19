@@ -8,6 +8,15 @@
 namespace myslam
 {
 
+    class MyMap{
+        public:
+
+        private:
+
+    };
+
+
+
     static inline void TransformEndpoint(pcl::PointXYZ& pt, const Eigen::Vector3d& transform){
         double rx = cos(transform[2])*pt.x - sin(transform[2])*pt.y;
         double ry = sin(transform[2])*pt.x + cos(transform[2])*pt.y;
