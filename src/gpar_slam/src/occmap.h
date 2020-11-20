@@ -146,11 +146,12 @@ namespace myslam
             int D = 2 * dy - dx;
             int y = y0;
 
+            mapValue(grid, 2, 3) = 20;
+
             for (int x = x0; x < x1; ++x)
             {
-                if (getMapValue(grid_index_update, x, y) < currUpdateIndex)
+                if (mapValue(grid_index_update, x, y) < currUpdateIndex)
                 {
-
                 }
             }
         }
@@ -161,34 +162,34 @@ namespace myslam
 
         //access map as a matrix
         template <class T>
-        float getMapValue(T *array, int x, int y)
+        T &mapValue(T *array, int x, int y) //lvalue
         {
             return array[x + y * size]; // return access
         }
 
-        template <class T>
-        void setMapValue(T *array, int x, int y, float val)
+        // template <class T>
+        // void setMapValue(T *array, int x, int y, float val)
+        // {
+        //     array[x + y * size] = val;
+        // }
+
+        void updateSetFree(int x, int y)
         {
-            array[x + y * size] = val;
+            if (mapValue(grid, x, y) < 50.0){
+                mapValue(grid, x, y) += this->logOddFree;
+            }
         }
 
+        void updateSetOcc(int x, int y)
+        {
 
-        void updateSetFree(int x,int y){
-            float logV = getMapValue(grid,x,y);
-
-            if(logV < 50)
-            setMapValue(grid,x,y,logV + this->logOddFree);
-
+            mapValue(grid, x, y) += this->logOddFree;
         }
 
-        void updateSetOcc(int x,int y){
-            float logV = getMapValue(grid,x,y);
-            setMapValue(grid,x,y,logV + this->logOddFree);
-        }
+        void updateUnsetFree(int x, int y)
+        {
 
-        void updateUnsetFree(int x,int y){
-            float logV = getMapValue(grid,x,y);
-            setMapValue(grid,x,y,logV - this->logOddFree);
+            mapValue(grid,x,y) -= this->logOddFree;
         }
 
         float *grid;
