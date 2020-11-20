@@ -5,26 +5,18 @@
 #include <octomap/octomap.h>
 #include <Eigen/Dense>
 
+#include "occmap.h"
+
 namespace myslam
 {
 
-    class MyMap{
-        public:
-
-        private:
-
-    };
-
-
-
-    static inline void TransformEndpoint(pcl::PointXYZ& pt, const Eigen::Vector3d& transform){
-        double rx = cos(transform[2])*pt.x - sin(transform[2])*pt.y;
-        double ry = sin(transform[2])*pt.x + cos(transform[2])*pt.y;
+    static inline void TransformEndpoint(pcl::PointXYZ &pt, const Eigen::Vector3d &transform)
+    {
+        double rx = cos(transform[2]) * pt.x - sin(transform[2]) * pt.y;
+        double ry = sin(transform[2]) * pt.x + cos(transform[2]) * pt.y;
 
         pt.x = rx + transform[0];
         pt.y = ry + transform[1];
-
-
     }
 
     static inline double mapAccess(const octomap::OcTree &tree, pcl::PointXYZ endpoint)
@@ -120,8 +112,8 @@ namespace myslam
 
         double scale = 1.0 / (tree.getResolution() * tree.getResolution());
 
-        double dmx = scale * (dy0*(p10 - p11) + dy1*(p00 - p01));
-        double dmy = scale * (dx0*(p11 - p01) + dx1*(p10 - p00));
+        double dmx = scale * (dy0 * (p10 - p11) + dy1 * (p00 - p01));
+        double dmy = scale * (dx0 * (p11 - p01) + dx1 * (p10 - p00));
 
         Eigen::Matrix<double, row, col> retval;
 
@@ -132,7 +124,7 @@ namespace myslam
     }
 
     template <int row, int col>
-    static inline Eigen::Matrix<double, row, col> modelGradient(const pcl::PointXYZ& endpoint,const Eigen::Vector3d& pose)
+    static inline Eigen::Matrix<double, row, col> modelGradient(const pcl::PointXYZ &endpoint, const Eigen::Vector3d &pose)
     {
         // Eigen::MatrixXd deriv(row, col);
         Eigen::Matrix<double, row, col> deriv;
@@ -146,6 +138,23 @@ namespace myslam
         deriv(1, 2) = cos(pose[2]) * endpoint.x - sin(pose[2]) * endpoint.y;
 
         return deriv;
+    }
+
+    // Normal GridMAP Overloads
+    static inline double mapAccess(const myslam::OccMap &map, pcl::PointXYZ endpoint)
+    {
+    }
+
+    template <int row, int col>
+    static inline Eigen::Matrix<double, row, col> mapGradient(const myslam::OccMap &map, pcl::PointXYZ endpoint)
+    {
+
+        Eigen::Matrix<double, row, col> retval;
+
+        // retval(0) = dmx;
+        // retval(1) = dmy;
+
+        return retval;
     }
 
 } // namespace myslam

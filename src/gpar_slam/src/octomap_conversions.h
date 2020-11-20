@@ -2,6 +2,7 @@
 #define OCTOMAP_CONVERSIONS_H
 
 #include <octomap/octomap.h>
+#include "occmap.h"
 #include <pcl/point_cloud.h>
 
 static inline void octomap2pcl(const octomap::OcTree &tree, pcl::PointCloud<pcl::PointXYZ> &pc)
@@ -26,6 +27,12 @@ static inline void pcl2octopc(const pcl::PointCloud<pcl::PointXYZ> &pc, octomap:
 			octo_pc.push_back(pt);
 		}
 }
+
+
+static inline void occmap2pcl(const myslam::OccMap& map,pcl::PointCloud<pcl::PointXYZ> &pc){
+
+}
+
 
 
 #endif

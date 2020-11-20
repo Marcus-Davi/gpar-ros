@@ -35,6 +35,10 @@
 
 #include "octomap_conversions.h"
 #include "gridslam.h"
+#include "occmap.h"
+
+//Use octopmap here
+// #define USE_OCTOMAP
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudT; // Define a templated type of pointcloud
 
@@ -44,7 +48,11 @@ ros::Publisher map_cloud_publisher;
 
 // Map Parameters
 double input_voxel_res;
+#ifdef USE_OCTOMAP
 octomap::OcTree *octmaptree;
+#else
+myslam::OccMap *occmap;
+#endif
 double g_map_res;
 
 //Global transform
@@ -80,9 +88,15 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 		pcl2octopc(*input_cloud, first_pc);
 		g_lock.unlock();
 
-		octmaptree->insertPointCloudRays(first_pc, origin);
+#ifdef USE_OCTOMAP
+octmaptree->insertPointCloudRays(first_pc, origin);// REPLACE
+octomap2pcl(*octmaptree, *map_cloud); //get occupied nodes // REPLACE
+#else
+		occmap->insertPointCloudRays(first_pc, origin);
+		occmap2pcl(*occmap,*map_cloud);
+#endif
 
-		octomap2pcl(*octmaptree, *map_cloud); //get occupied nodes
+		
 
 		sensor_msgs::PointCloud2::Ptr out_msg = boost::make_shared<sensor_msgs::PointCloud2>();
 		pcl::toROSMsg(*map_cloud, *out_msg);
@@ -113,7 +127,7 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 
 		double funval;
 		int maxIt = 5;
-		
+
 		auto start = std::chrono::high_resolution_clock::now();
 		for (int j = 0; j < maxIt; ++j)
 		{
@@ -127,10 +141,15 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 
 				// myslam::TransformEndpoint(endpoint,global_transform_2d);
 
-				funval = 1 - myslam::mapAccess(*octmaptree, endpoint);
-
-				dm = myslam::mapGradient<1, 2>(*octmaptree, endpoint); // -12
+#ifdef USE_OCTOMAP
+				funval = 1 - myslam::mapAccess(*octmaptree, endpoint);			  // REPLACE
+				dm = myslam::mapGradient<1, 2>(*octmaptree, endpoint);			  // -12 // REPLACE
+				jac = myslam::modelGradient<2, 3>(endpoint, global_transform_2d); //REPLACE
+#else
+				funval = 1 - myslam::mapAccess(*occmap, endpoint);
+				dm = myslam::mapGradient<1, 2>(*occmap, endpoint);
 				jac = myslam::modelGradient<2, 3>(endpoint, global_transform_2d);
+#endif
 				// std::cout << "funval = " << funval << std::endl;
 				// std::cout << "dm = " << dm << std::endl;
 				// std::cout << "jac = " << jac << std::endl;
@@ -186,9 +205,14 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 
 			pcl2octopc(*input_cloud_tf, octo_pc);
 			octomap::point3d sensor_origin(global_transform_2d[0], global_transform_2d[1], 0);
-			octmaptree->insertPointCloudRays(octo_pc, sensor_origin);
 
-			octomap2pcl(*octmaptree, *map_cloud); //get occupied nodes
+#ifdef USE_OCTOMAP
+			octmaptree->insertPointCloudRays(octo_pc, sensor_origin); //REPLACE
+			octomap2pcl(*octmaptree, *map_cloud);					  //get occupied nodes // REPLACE
+#else
+			occmap->insertPointCloudRays(octo_pc, sensor_origin);
+			occmap2pcl(*occmap, *map_cloud);
+#endif
 
 			sensor_msgs::PointCloud2::Ptr out_msg = boost::make_shared<sensor_msgs::PointCloud2>();
 			pcl::toROSMsg(*map_cloud, *out_msg);
@@ -240,10 +264,20 @@ int main(int argc, char **argv)
 	nh_private.param<std::string>("icp_method", icp_method, "icp");
 	nh_private.param<int>("icp_iterations", max_icp_it, 10);
 
+#ifdef USE_OCTOMAP
 	octmaptree = new octomap::OcTree(g_map_res);
 	octmaptree->setProbHit(prob_occ);
 	octmaptree->setProbMiss(prob_free);
 	octmaptree->setOccupancyThres(prob_thres);
+
+#else
+	occmap = new myslam::OccMap(g_map_res, 300);
+	occmap->setOccupancyThres(prob_thres);
+	occmap->setProbHit(prob_occ);
+	occmap->setProbMiss(prob_free);
+	occmap->setOccupancyThres(prob_thres);
+	occmap->setStartOrigin(0.5, 0.5);
+#endif
 
 	ROS_WARN("map resolution -> %f", g_map_res);
 	ROS_WARN("prob_occ -> %f", prob_occ);
@@ -295,8 +329,8 @@ int main(int argc, char **argv)
 		tf.header.stamp = ros::Time::now();
 		tf.header.frame_id = "map";
 		tf.child_frame_id = "cloud";
-		tf.transform.translation.x = global_transform(0,3);
-		tf.transform.translation.y = global_transform(1,3);
+		tf.transform.translation.x = global_transform(0, 3);
+		tf.transform.translation.y = global_transform(1, 3);
 		tf.transform.translation.z = 0;
 		Eigen::Quaterniond q;
 		q = Eigen::AngleAxisd(global_transform_2d[2], Eigen::Vector3d::UnitZ());

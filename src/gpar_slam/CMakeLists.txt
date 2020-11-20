@@ -144,7 +144,7 @@ include_directories(
 
 # application
 add_executable(lidar_odometry src/lidar_odometry.cpp)
-add_executable(my_loam2 src/my_loam2.cpp)
+# add_executable(my_loam2 src/my_loam2.cpp)
 add_executable(my_loam3 src/my_loam3.cpp)
 
 
@@ -168,11 +168,11 @@ target_link_libraries(lidar_odometry
 # ${PCL_LIBRARIES}
 )
 
-target_link_libraries(my_loam2
- ${catkin_LIBRARIES}
- ${OCTOMAP_LIBRARIES}
-# ${PCL_LIBRARIES}
-)
+# target_link_libraries(my_loam2
+#  ${catkin_LIBRARIES}
+#  ${OCTOMAP_LIBRARIES}
+# # ${PCL_LIBRARIES}
+# )
 target_link_libraries(my_loam3
  ${catkin_LIBRARIES}
  ${OCTOMAP_LIBRARIES}
