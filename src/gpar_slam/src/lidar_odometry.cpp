@@ -41,13 +41,13 @@ bool first_cloud = true;
 // Parameters
 float icp_voxel_res = 0.5;
 
-PointCloudT::Ptr current_cloud = boost::make_shared<PointCloudT>();
-PointCloudT::Ptr previous_cloud = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr current_cloud = pcl::make_shared<PointCloudT>();
+PointCloudT::Ptr previous_cloud = pcl::make_shared<PointCloudT>();
 
 void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 {
-
-	PointCloudT::Ptr input_cloud = boost::make_shared<PointCloudT>();
+	ROS_INFO("lidar callback");
+	PointCloudT::Ptr input_cloud = pcl::make_shared<PointCloudT>();
 	pcl::fromROSMsg<pcl::PointXYZ>(*pc_msg, *input_cloud);
 
 	static pcl::PassThrough<pcl::PointXYZ> pass;
@@ -61,6 +61,7 @@ void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 	// voxel.setLeafSize(icp_voxel_res, icp_voxel_res, icp_voxel_res);
 	// voxel.filter(*current_cloud);
 	*current_cloud = *input_cloud;
+	// ROS_INFO("lidar callback exit");
 }
 
 int main(int argc, char **argv)
@@ -85,16 +86,26 @@ int main(int argc, char **argv)
 
 	ros::Rate rate(10); //Odometry
 
-	while (ros::ok())
-	{
-		ros::spinOnce(); // process callbacks
+	ROS_WARN("starting..");
 
-		//Odometry
+	// ros::spin();
+
+	while (ros::ok())
+	
+	{
+		// ROS_WARN("spinning");
+		ros::spinOnce(); // process callbacks
+		// continue;
+		
+
+		// Odometry
 		if (previous_cloud->size() == 0)
 		{
 			*previous_cloud = *current_cloud;
-			continue;
-		}
+			ROS_WARN("continuing");
+			// rate.sleep();
+			// continue;
+		} else {
 
 		icp.setInputSource(current_cloud);
 		icp.setInputTarget(previous_cloud);
@@ -112,6 +123,7 @@ int main(int argc, char **argv)
 		static tf2_ros::TransformBroadcaster br; //tf Broadcaster
 		geometry_msgs::TransformStamped tf_transform;
 		tf_transform.header.stamp = pcl_conversions::fromPCL(current_cloud->header.stamp);
+		// tf_transform.header.stamp = ros::Time::now();
 		tf_transform.header.frame_id = "map";
 		tf_transform.child_frame_id = "cloud";
 		tf_transform.transform.translation.x = global_transform(0, 3);
@@ -121,9 +133,11 @@ int main(int argc, char **argv)
 		tf_transform.transform.rotation.x = rot_quat.x();
 		tf_transform.transform.rotation.y = rot_quat.y();
 		tf_transform.transform.rotation.z = rot_quat.z();
+		ROS_INFO("publishing...");
 		br.sendTransform(tf_transform);
 
 		*previous_cloud = *current_cloud;
+		}
 
 		rate.sleep();
 	}

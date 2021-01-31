@@ -26,7 +26,7 @@ void cloud_callback(const sensor_msgs::PointCloud2::Ptr cloud)
 
 bool save_map(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &resp)
 {
-  static PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
+  static PointCloudT::Ptr cloud = pcl::make_shared<PointCloudT>();
   pcl::fromROSMsg(*cloud_g, *cloud);
   std::string ref_;
   if(has_reference_param) {

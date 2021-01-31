@@ -49,12 +49,12 @@ ros::Subscriber sub_pc;
 ros::Subscriber sub_img;
 ros::Publisher pub_pc;
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
 void img_callback(const sensor_msgs::Image::ConstPtr& img_msg){
 ROS_INFO("got IMG");
 //Sincronizar msgs
-PointCloudT::Ptr cloud_color = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr cloud_color = pcl::make_shared<PointCloudT>();
 size_t pc_size = cloud->size();
 cloud_color->resize(pc_size);
 

@@ -35,7 +35,7 @@ float x_min;
 float x_max;
 
 // Nuvem Global
-PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr cloud = pcl::make_shared<PointCloudT>();
 ros::Publisher merge_signal;
 
 std::string profiler_frame = "profiler_obj"; // Default profiler frame
@@ -46,8 +46,8 @@ float lidar_height;
 void lidar_callback(const sensor_msgs::PointCloud2ConstPtr pc){
 
 
-boost::shared_ptr<PointCloudT> cloud = boost::make_shared<PointCloudT>();
-boost::shared_ptr<PointCloudT> cloud_filtered = boost::make_shared<PointCloudT>();
+pcl::shared_ptr<PointCloudT> cloud = pcl::make_shared<PointCloudT>();
+pcl::shared_ptr<PointCloudT> cloud_filtered = pcl::make_shared<PointCloudT>();
 
 pcl::fromROSMsg(*pc,*cloud);
 

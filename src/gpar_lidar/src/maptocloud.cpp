@@ -29,7 +29,7 @@ void save_map_callback(const std_msgs::String::ConstPtr& msg){
   if(msg->data == "save"){
 //ROS_INFO("Saving MAP!");
   //Faz varredura do mapar
-pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 unsigned int  width = map_g->info.width; // largura
 unsigned int  height = map_g->info.height; //altura
   float resolution = map_g->info.resolution;

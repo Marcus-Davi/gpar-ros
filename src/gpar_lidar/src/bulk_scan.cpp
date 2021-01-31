@@ -54,7 +54,7 @@ bool start_merge = false;
 
 
 // Nuvem Global
-PointCloudT::Ptr cloud_object = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr cloud_object = pcl::make_shared<PointCloudT>();
 
 
 
@@ -88,10 +88,10 @@ void top_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg){
 				return;
 
 
-		PointCloudT::Ptr cloud_top = boost::make_shared<PointCloudT>();
-		PointCloudT::Ptr cloud_map = boost::make_shared<PointCloudT>();
+		PointCloudT::Ptr cloud_top = pcl::make_shared<PointCloudT>();
+		PointCloudT::Ptr cloud_map = pcl::make_shared<PointCloudT>();
 
-		PointCloudT::Ptr cloud_map_output = boost::make_shared<PointCloudT>();
+		PointCloudT::Ptr cloud_map_output = pcl::make_shared<PointCloudT>();
 
 
 

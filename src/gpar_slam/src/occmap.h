@@ -61,7 +61,7 @@ namespace myslam
             tfY = start_y * resolution * size;
         }
 
-        // NAO USAR NUVEM JA TRANSFORMADA
+        // NAO USAR NUVEM JA TRANSFORMADA, POIS A POSE JA TEM ESSA INFO
         void insertPointCloudRays(octomap::Pointcloud &pointcloud, octomap::point3d &pose)
         {
             // Usar bresenham

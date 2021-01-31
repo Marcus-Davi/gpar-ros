@@ -35,7 +35,7 @@ ros::Publisher pub_npoints;
 
 tf::TransformListener* tf_;
 std::string fixed_frame_;
-PointCloudT::Ptr cloud_lower_ = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr cloud_lower_ = pcl::make_shared<PointCloudT>();
 
 void savePoints(const PointCloudT::ConstPtr& pc){
  ros::Time time = ros::Time::now();
@@ -81,7 +81,7 @@ void callback(const sensor_msgs::PointCloud2::ConstPtr& pc)
 {
   static std_msgs::UInt16 npts_msg;
 
-  static PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>();
+  static PointCloudT::Ptr cloud = pcl::make_shared<PointCloudT>();
   pcl::fromROSMsg(*pc, *cloud);
 
 int current_cloud_size = cloud->size();
@@ -114,7 +114,7 @@ return;
   // ----- transform to fixed frame
   try
   {
-    PointCloudT::Ptr cloud_fixed = boost::make_shared<PointCloudT>();
+    PointCloudT::Ptr cloud_fixed = pcl::make_shared<PointCloudT>();
 
     if (!pcl_ros::transformPointCloud(fixed_frame_, *cloud, *cloud_fixed, *tf_))
     {

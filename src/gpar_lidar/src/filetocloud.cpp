@@ -37,7 +37,7 @@ int main(int argc,char** argv){
     // PATH OK
 
     
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 int k;
     if(pcl::io::loadPCDFile(cloud_file,*cloud)){
         ROS_FATAL("could not open .pcd file.");

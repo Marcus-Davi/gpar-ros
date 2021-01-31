@@ -62,7 +62,7 @@ Eigen::Vector3d last_up_pose = Eigen::Vector3d::Zero();
 Eigen::Vector3d global_transform_2d = Eigen::Vector3d::Zero();
 
 //Odometry variable
-PointCloudT::Ptr current_cloud = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr current_cloud = pcl::make_shared<PointCloudT>();
 PointCloudT::Ptr map_cloud;
 
 std::mutex g_lock;
@@ -76,7 +76,7 @@ void timerCallback(const ros::TimerEvent &event)
 
 void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr &pc_msg)
 {
-	PointCloudT::Ptr input_cloud = boost::make_shared<PointCloudT>();
+	PointCloudT::Ptr input_cloud = pcl::make_shared<PointCloudT>();
 
 	pcl::fromROSMsg<pcl::PointXYZ>(*pc_msg, *input_cloud);
 	// ROS_INFO("LASER");
@@ -118,7 +118,7 @@ octomap2pcl(*octmaptree, *map_cloud); //get occupied nodes // REPLACE
 		// pcl::copyPointCloud(*input_cloud, *current_cloud);
 		// g_lock.unlock();
 
-		pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_tf = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+		pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_tf = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
 		Eigen::Matrix<double, 1, 2> dm;
 		Eigen::Matrix<double, 2, 3> jac;
@@ -285,7 +285,7 @@ int main(int argc, char **argv)
 	ROS_WARN("prob_thres -> %f", prob_thres);
 	ROS_WARN("input_voxel_size -> %f", input_voxel_res);
 
-	map_cloud = boost::make_shared<PointCloudT>();
+	map_cloud = pcl::make_shared<PointCloudT>();
 
 	std::string cloud_topic = nh.resolveName("cloud");
 	ros::Subscriber cloud_sub = nh.subscribe<sensor_msgs::PointCloud2>(cloud_topic, 5, cloud_callback);

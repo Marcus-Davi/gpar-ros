@@ -20,7 +20,7 @@ ros::Publisher pub_merged;
 tf2_ros::TransformListener *tf_listener;
 tf2_ros::Buffer *tf_buffer;
 
-PointCloudT::Ptr cloud_merged = boost::make_shared<PointCloudT>();
+PointCloudT::Ptr cloud_merged = pcl::make_shared<PointCloudT>();
 
 void msg_callback(const std_msgs::String::ConstPtr& str_msg){
 		ROS_INFO("got msg");
@@ -32,10 +32,10 @@ if(str_msg->data == "reset")
 }
 
 void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr& pc){
-static PointCloudT::Ptr cloud = boost::make_shared<PointCloudT>(); //Make pointer to input cloud
+static PointCloudT::Ptr cloud = pcl::make_shared<PointCloudT>(); //Make pointer to input cloud
 // pcl::fromROSMsg(*pc,*cloud);
 // ROS_INFO("callback called!");
-// PointCloudT::Ptr world_cloud = boost::make_shared<PointCloudT>();
+// PointCloudT::Ptr world_cloud = pcl::make_shared<PointCloudT>();
 // ROS_INFO("source frame = %s",cloud->header.frame_id.c_str());
 // ROS_INFO("world frame = %s",world_frame.c_str());
 
