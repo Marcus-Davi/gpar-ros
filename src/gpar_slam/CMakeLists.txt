@@ -125,6 +125,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  /home/marcus/Workspace/Coding/C++/Cpp-PCL/src
 )
 
 ## Declare a C++ library
@@ -143,9 +144,8 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/gpar_slam_node.cpp)
 
 # application
-add_executable(lidar_odometry src/lidar_odometry.cpp)
-# add_executable(my_loam2 src/my_loam2.cpp)
-add_executable(my_loam3 src/my_loam3.cpp)
+add_executable(mLoam src/mLoam.cpp)
+
 
 
 ## Rename C++ executable without prefix
@@ -163,21 +163,12 @@ add_executable(my_loam3 src/my_loam3.cpp)
 #   ${catkin_LIBRARIES}
 # )
 
-target_link_libraries(lidar_odometry
+target_link_libraries(mLoam
  ${catkin_LIBRARIES}
 # ${PCL_LIBRARIES}
 )
 
-# target_link_libraries(my_loam2
-#  ${catkin_LIBRARIES}
-#  ${OCTOMAP_LIBRARIES}
-# # ${PCL_LIBRARIES}
-# )
-target_link_libraries(my_loam3
- ${catkin_LIBRARIES}
- ${OCTOMAP_LIBRARIES}
-# ${PCL_LIBRARIES}
-)
+
 
 #############
 ## Install ##

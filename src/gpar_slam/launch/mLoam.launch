@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+
+
+
+		<node name="rosbag" pkg="rosbag" type="play" args="$(find gpar_slam)/bags/LMS_nanook.bag --pause" output="screen" />
+
+		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_slam)/rviz/myslam.rviz" />
+
+		<node name="cloudtofile_map" type="cloudtofile" pkg="gpar_lidar" >
+				<remap from="cloud" to="map_cloud" />
+				<param name="reference" type="str" value="map" />
+		</node>
+
+
+		<node name="cloudtofile_scan" type="cloudtofile" pkg="gpar_lidar" >
+				<remap from="cloud" to="cloud" />
+				<param name="reference" type="str" value="cloud" />
+		</node>	
+
+		
+	<!--		<node name="mLoam" pkg="gpar_slam" type="mLoam" output="screen" /> -->
+
+</launch>
+
