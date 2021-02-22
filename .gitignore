@@ -9,3 +9,4 @@ velodyne.bag
 /src/Onboard-SDK-ROS-3.8/cmake-modules/build
 *.swp
 .clangd
+.vscode/
