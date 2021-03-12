@@ -16,18 +16,28 @@ std::string reference;
 std::string save_path;
 
 static sensor_msgs::PointCloud2::Ptr cloud_g = boost::make_shared<sensor_msgs::PointCloud2>();
-typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudT;
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloudT;
 
+bool got_cloud = false;
 void cloud_callback(const sensor_msgs::PointCloud2::Ptr cloud)
 {
   ROS_INFO("GOT CLOUD!");
+
+  if(got_cloud == false){
+		  ROS_INFO("N Points: %d",cloud->height*cloud->width);
+		  ROS_INFO("N Fields %ld",cloud->fields.size()); 
+
+		  got_cloud = true;
+  }
+
   cloud_g = cloud;
 }
 
 bool save_map(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &resp)
 {
-  static PointCloudT::Ptr cloud = pcl::make_shared<PointCloudT>();
-  pcl::fromROSMsg(*cloud_g, *cloud);
+  static pcl::PCLPointCloud2::Ptr pcl_cloud = pcl::make_shared<pcl::PCLPointCloud2>();
+	// pcl::io::savePCDFile("teste.pcd",*cloud2);
+
   std::string ref_;
   if(has_reference_param) {
     ref_ = reference;
@@ -37,7 +47,7 @@ bool save_map(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &resp)
   
   try
   {
-    if (!pcl_ros::transformPointCloud(ref_, *cloud, *cloud, *tf_))
+    if (!pcl_ros::transformPointCloud(ref_, *cloud_g, *cloud_g, *tf_))
     {
       ROS_WARN("TF exception in transformPointCloud!");
       resp.message = "Cant transform";
@@ -51,6 +61,7 @@ bool save_map(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &resp)
     return false;
   }
   // Stamp
+  pcl_conversions::moveToPCL(*cloud_g,*pcl_cloud);
   std::time_t std_time;
   char *time_date = std::ctime(&std_time);
   ros::Time time = ros::Time::now();
@@ -60,7 +71,7 @@ bool save_map(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &resp)
   // pcl::io::savePCDFileBinary(str_pcd,*cloud);
 
   // TODO Verificar exceptions
-  pcl::io::savePCDFileASCII(str_pcd, *cloud); // May be binary
+  pcl::io::savePCDFile(str_pcd, *pcl_cloud); // May be binary
   ROS_INFO("PCD Saved at %s", str_pcd.c_str());
   resp.success = true;
   resp.message = "saved at " + str_pcd;

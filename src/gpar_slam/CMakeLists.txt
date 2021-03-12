@@ -125,7 +125,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
-  /home/marcus/Workspace/Coding/C++/Cpp-PCL/src
+  /home/marcus/Workspace/Coding/C++/Cpp-PCL/src #features
 )
 
 ## Declare a C++ library

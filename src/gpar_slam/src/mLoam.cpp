@@ -11,9 +11,11 @@
 #include <pcl/registration/transformation_estimation_2D.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/visualization/pcl_visualizer.h>
-
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/registration/icp.h>
 
+// PCL ROS
+#include <pcl_ros/filters/passthrough.h>
 
 #include "sensor_msgs/PointCloud2.h"
 #include <tf2_ros/transform_broadcaster.h>
@@ -23,181 +25,184 @@
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudT;
 
-// static PointCloudT::Ptr cloud_map;
+PointCloudT::Ptr mapCloud(new PointCloudT);
+PointCloudT::Ptr currentCloud(new PointCloudT);
 
+Eigen::Matrix4f global_tf = Eigen::Matrix4f::Identity();
+ros::Publisher mapPub;
 
-static PointCloudT::Ptr last_scan;
+//ICP
+float corr_dist;
+float voxel_res;
 
-PointCloudT::Ptr aligned(new PointCloudT);
-
-// ros::Publisher map_publisher;
-ros::Publisher processed_publisher;
-
-std::mutex g_lock;
-
-Eigen::Matrix4f current_transform;
-Eigen::Matrix4f odometry_transform = Eigen::Matrix4f::Identity();
-
-static pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp; //
-// static pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp; //
-
-
-ros::Time current_time;
-// Mappig
-void timerCallback(const ros::TimerEvent &ev)
+void mappingCallback(const ros::TimerEvent &event)
 {
-}
-
-//Laser Scan
-void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg)
-{
-
-	static PointCloudT::Ptr cloud_in(new PointCloudT);
-	static PointCloudT::Ptr current_scan_raw(new PointCloudT);
-	static PointCloudT::Ptr current_scan_DS(new PointCloudT);
-
-	pcl::fromROSMsg(*msg, *cloud_in);
-
-	auto start = std::chrono::high_resolution_clock::now();
-	pcl::PassThrough<pcl::PointXYZ> pass_through;
-	pass_through.setInputCloud(cloud_in);
-	pass_through.setFilterFieldName("x");
-	pass_through.setFilterLimits(0, 0.05); // remove weird points close to origin
-	pass_through.setNegative(true);
-	pass_through.filter(*current_scan_raw);
-
-	pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
-	sor.setInputCloud(current_scan_raw);
-	sor.setMeanK(20);
-	sor.setStddevMulThresh(0.2);
-	// sor.filter(*current_scan_DS);
-
-	pcl::VoxelGrid<pcl::PointXYZ> voxel;
-	voxel.setInputCloud(current_scan_raw);
-	voxel.setLeafSize(0.05,0.05,0.05);
-	voxel.filter(*current_scan_DS);
-
-	auto elapsed = std::chrono::high_resolution_clock::now() - start;
-	ROS_WARN("Filter time: %ld us", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
-
-
-	//first
-	if (last_scan->points.size() == 0 || current_scan_DS->header.stamp < last_scan->header.stamp)
+	// check if we have a map
+	if (mapCloud->points.size() == 0)
 	{
-		*last_scan = *current_scan_raw;
+		if (currentCloud->points.size() != 0)
+		{
+			*mapCloud = *currentCloud;
+			return;
+		}
 		return;
 	}
+	// next iterations
+	ROS_WARN("Compute mapping");
+	// Use initieal guess of odometry to register to a map
+	PointCloudT::Ptr currCloudTf(new PointCloudT);
+	static pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+	// pcl::transformPointCloud(*currentCloud,currCloudTf,global_tf);
 
-	// process odometry
-	start = std::chrono::high_resolution_clock::now();
-	icp.setInputCloud(current_scan_DS);
-	icp.setInputTarget(last_scan);
+	icp.setInputSource(currentCloud);
+	icp.setInputTarget(mapCloud);
+	icp.setMaxCorrespondenceDistance(0.2);
+	icp.setMaximumIterations(100);
+	icp.setTransformationEpsilon(1e-8);
+	icp.align(*currCloudTf, global_tf);
 
-	// static pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>::Ptr te_2d(new pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>);
-	// icp.setTransformationEstimation(te_2d);
-	icp.setMaxCorrespondenceDistance(0.1);
-	icp.setMaximumIterations(150);
-	icp.setTransformationEpsilon(1e-7);
-	
-	icp.align(*aligned);
-	elapsed = std::chrono::high_resolution_clock::now() - start;
-	ROS_WARN("Registration time: %ld us", std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count());
-	ROS_WARN("Registration score: %f",icp.getFitnessScore());
-	
+	global_tf = icp.getFinalTransformation();
 
-	current_transform = icp.getFinalTransformation();
-	odometry_transform = odometry_transform * current_transform;
+	// Add
+	*mapCloud += *currCloudTf;
+	pcl::VoxelGrid<pcl::PointXYZ> voxel;
+	voxel.setInputCloud(mapCloud);
+	voxel.setLeafSize(0.05, 0.05, 0.05);
+	voxel.filter(*mapCloud);
 
-	current_time = pcl_conversions::fromPCL(current_scan_raw->header.stamp);
-	*last_scan = *current_scan_DS; // update 
+	// Publish map
+	sensor_msgs::PointCloud2 mapMsg;
+	pcl::toROSMsg(*mapCloud, mapMsg);
+	mapMsg.header.frame_id = "map";
+	mapMsg.header.stamp = ros::Time::now();
 
-	sensor_msgs::PointCloud2 processed_msg;
-	pcl::toROSMsg(*current_scan_DS,processed_msg);
-	
-	processed_msg.header.frame_id = "cloud";
-	processed_msg.header.stamp = msg->header.stamp;
-	processed_publisher.publish(processed_msg);
+	mapPub.publish(mapMsg);
+}
 
-
-
-	// Features::EdgeDetection(cloud_in,cloud_features,6,12);
+void scanCallback(const sensor_msgs::PointCloud2::ConstPtr &msg)
+{
+	ROS_INFO("got cloud");	
+	pcl::fromROSMsg(*msg, *currentCloud);
+	pcl::PassThrough<pcl::PointXYZ> passthrough;
+	passthrough.setInputCloud(currentCloud);
+	passthrough.setFilterFieldName("x");
+	passthrough.setFilterLimits(0.05,10);
+	passthrough.setFilterLimitsNegative(false);
+	passthrough.filter(*currentCloud);
 }
 
 int main(int argc, char **argv)
 {
-
 	ros::init(argc, argv, "mloam");
-
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_private("~");
 
-	// cloud_map.reset(new PointCloudT);
-	
-	last_scan.reset(new PointCloudT);
+	// Sampling
+	float Ts;
 
-	ros::Subscriber lidar_sub = nh.subscribe("cloud", 10, cloudCallback);
-	processed_publisher = nh.advertise<sensor_msgs::PointCloud2>("processed_cloud",2);
-	// map_publisher = nh.advertise<sensor_msgs::PointCloud2>("cloud_map", 10);
+	nh_private.param<float>("sampling_time", Ts, 0.1);
+	nh_private.param<float>("corr_dist", corr_dist, 0.1);
+	nh_private.param<float>("voxel_res", voxel_res, 0.1);
 
+	// ROS_WARN("corr dist = %f",corr_dist);
 
+	ros::Subscriber sub = nh.subscribe("cloud", 1, scanCallback);
+
+	ros::Rate r(1 / Ts);
+	ros::Publisher laser_pub1 = nh.advertise<sensor_msgs::PointCloud2>("cloud1", 1);
+	ros::Publisher laser_pub2 = nh.advertise<sensor_msgs::PointCloud2>("cloud2", 1);
+	ros::Publisher laser_pub3 = nh.advertise<sensor_msgs::PointCloud2>("cloud3", 1);
+	mapPub = nh.advertise<sensor_msgs::PointCloud2>("cloud_map", 1);
+	sensor_msgs::PointCloud2 laser_msg1, laser_msg2, laser_msg3;
+
+	PointCloudT::Ptr lastCloud(new PointCloudT);
+	PointCloudT::Ptr tfCloud(new PointCloudT);
 
 	tf2_ros::TransformBroadcaster br;
-	geometry_msgs::TransformStamped odometry_tf;
 
-	PointCloudT::Ptr features(new PointCloudT);
-	PointCloudT::Ptr edges(new PointCloudT);
-	PointCloudT::Ptr planar(new PointCloudT);
+	ros::Timer mappingTimer = nh.createTimer(ros::Duration(0.5), mappingCallback);
 
-	ros::Timer timer = nh.createTimer(ros::Duration(0.5), timerCallback);
-
-	ros::AsyncSpinner spinner(1);
-	spinner.start();
-
-	ROS_INFO("Waiting scan...");
-	while (last_scan->size() == 0)
-	{
-		ros::spinOnce(); // Wait scan...;
-	}
-
-	ros::Rate r(10);
-	// ROS_INFO("starting ")
-	
-
-	ros::Time last_time;
+	// Odometry Loop
 	while (ros::ok())
 	{
-		// Check correctness...
 
-		Eigen::Matrix3f R = odometry_transform.block<3, 3>(0, 0);
-		Eigen::Quaternionf rot_q(R);
-
-
-		
-		odometry_tf.header.frame_id = "map";
-		odometry_tf.header.stamp = current_time;
-		odometry_tf.child_frame_id = "cloud";
-
-		
-
-		odometry_tf.transform.translation.x = odometry_transform(0, 3);
-		odometry_tf.transform.translation.y = odometry_transform(1, 3);
-		odometry_tf.transform.translation.z = 0;
-
-		odometry_tf.transform.rotation.w = rot_q.w();
-		odometry_tf.transform.rotation.x = rot_q.x();
-		odometry_tf.transform.rotation.y = rot_q.y();
-		odometry_tf.transform.rotation.z = rot_q.z();
-
-
-		//avoid warnings
-		if ( odometry_tf.header.stamp > last_time){
-		br.sendTransform(odometry_tf);
-		last_time = odometry_tf.header.stamp;
+		if (lastCloud->points.size() == 0)
+		{ //empty last ?
+			if (currentCloud->points.size() != 0)
+			{ // new scan
+				*lastCloud = *currentCloud;
+			}
+			else
+			{
+				ros::spinOnce();
+				continue;
+			}
 		}
+
+		// Filtering
+		auto start = std::chrono::high_resolution_clock::now();
+		static pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+		sor.setInputCloud(currentCloud);
+		sor.setMeanK(20);
+		sor.setStddevMulThresh(0.1);
+		sor.filter(*currentCloud);
+
+		static pcl::VoxelGrid<pcl::PointXYZ> voxel;
+		voxel.setInputCloud(currentCloud);
+		voxel.setLeafSize(voxel_res, voxel_res, voxel_res);
+		voxel.filter(*currentCloud);
+		auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count();
+		ROS_INFO("Filtering time: %ld", elapsed);
+
+		// Compute Odometry between frames
+		static pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+		icp.setInputSource(currentCloud);
+		icp.setInputTarget(lastCloud);
+		icp.setMaxCorrespondenceDistance(corr_dist);
+		icp.setMaximumIterations(100);
+		icp.setTransformationEpsilon(1e-8);
+		static pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>::Ptr tf_2d(new pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>);
+		icp.setTransformationEstimation(tf_2d);
+		icp.align(*tfCloud);
+		ROS_INFO("Fit Score: %f", icp.getFitnessScore());
+
+		Eigen::Matrix4f odom_tf = icp.getFinalTransformation();
+
+		global_tf = global_tf * odom_tf;
+
+		geometry_msgs::TransformStamped tf_stamped;
+		tf_stamped.header.frame_id = "map";
+		tf_stamped.child_frame_id = "cloud"; // laser base
+		tf_stamped.header.stamp = ros::Time::now();
+		tf_stamped.transform.translation.x = global_tf(0, 3); //x
+		tf_stamped.transform.translation.y = global_tf(1, 3); //y
+		tf_stamped.transform.translation.z = global_tf(2, 3); //z
+		Eigen::Quaternionf q(global_tf.block<3, 3>(0, 0));
+		tf_stamped.transform.rotation.w = q.w();
+		tf_stamped.transform.rotation.x = q.x();
+		tf_stamped.transform.rotation.y = q.y();
+		tf_stamped.transform.rotation.z = q.z();
+
+		br.sendTransform(tf_stamped);
+
+		pcl::toROSMsg(*currentCloud, laser_msg1);
+		pcl::toROSMsg(*lastCloud, laser_msg2);
+		pcl::toROSMsg(*tfCloud, laser_msg3);
+
+		laser_msg1.header.frame_id = "cloud";
+		laser_msg1.header.stamp = ros::Time::now();
+		laser_msg2.header.frame_id = "cloud";
+		laser_msg2.header.stamp = ros::Time::now();
+		laser_msg3.header.frame_id = "cloud";
+		laser_msg3.header.stamp = ros::Time::now();
+
+		laser_pub1.publish(laser_msg1);
+		laser_pub2.publish(laser_msg2);
+		laser_pub3.publish(laser_msg3);
+
+		*lastCloud = *currentCloud;
 
 		ros::spinOnce();
 		r.sleep();
 	}
-
-	return 0;
 }

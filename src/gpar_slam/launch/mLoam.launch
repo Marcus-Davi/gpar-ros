@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <launch>
 
+		<param name="use_sim_time" value="true" />
 
-
-		<node name="rosbag" pkg="rosbag" type="play" args="$(find gpar_slam)/bags/LMS_nanook.bag --pause" output="screen" />
-
+		<node name="rosbag" pkg="rosbag" type="play" args="$(find gpar_slam)/bags/LMS_nanook.bag --pause --clock" output="screen" />
 		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_slam)/rviz/myslam.rviz" />
+
 
 		<node name="cloudtofile_map" type="cloudtofile" pkg="gpar_lidar" >
 				<remap from="cloud" to="map_cloud" />
@@ -18,8 +18,23 @@
 				<param name="reference" type="str" value="cloud" />
 		</node>	
 
-		
-	<!--		<node name="mLoam" pkg="gpar_slam" type="mLoam" output="screen" /> -->
+		<node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+
+		<!-- <node pkg="nodelet" type="nodelet" name="passthough" args="load pcl/PassThrough pcl_manager" output="screen" >
+			<remap from="~input" to="/cloud" />
+<rosparam>
+filter_field_name: z
+filter_limit_min: 0.01
+filter_limit_max: 1.5
+filter_limit_negative: False
+</rosparam>
+		</node> -->
+
+		<node name="mloadm" pkg="gpar_slam" type="mLoam" output="screen" >
+			<param name="sampling_time" value="0.1" />
+			<param name="corr_dist" value="0.3" />
+			<param name="voxel_res" value="0.05" />
+			</node>
 
 </launch>
 
