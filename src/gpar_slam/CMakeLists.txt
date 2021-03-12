@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
 )
 
-find_package(OCTOMAP REQUIRED)
+find_package(octomap REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -165,6 +165,7 @@ add_executable(mLoam src/mLoam.cpp)
 
 target_link_libraries(mLoam
  ${catkin_LIBRARIES}
+ octomap
 # ${PCL_LIBRARIES}
 )
 

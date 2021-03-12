@@ -23,6 +23,13 @@
 #include <mutex>
 #include "Features.h"
 
+// Octopmap
+#include <octomap/octomap.h>
+#include "octomap_conversions.h"
+
+// Comment here for pure cloud slam
+#define USE_OCTOMAP
+
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudT;
 
 PointCloudT::Ptr mapCloud(new PointCloudT);
@@ -31,64 +38,105 @@ PointCloudT::Ptr currentCloud(new PointCloudT);
 Eigen::Matrix4f global_tf = Eigen::Matrix4f::Identity();
 ros::Publisher mapPub;
 
+// Resolution
+std::shared_ptr<octomap::OcTree> octmap;
+
 //ICP
 float corr_dist;
 float voxel_res;
+static bool mapEmpty = true;
+
+
+std::mutex g_lock;
 
 void mappingCallback(const ros::TimerEvent &event)
 {
 	// check if we have a map
-	if (mapCloud->points.size() == 0)
-	{
+	if(mapEmpty){
 		if (currentCloud->points.size() != 0)
 		{
+#ifdef USE_OCTOMAP
+			octomap::Pointcloud octo_pc;
+			pcl2octopc(*currentCloud, octo_pc);
+			octomap::point3d origin(0, 0, 0);
+			octmap->insertPointCloudRays(octo_pc, origin);
+
+#else
+
 			*mapCloud = *currentCloud;
+
+#endif
+		mapEmpty = false;
 			return;
-		}
+		} else { //not ready
 		return;
+		}
 	}
+
 	// next iterations
 	ROS_WARN("Compute mapping");
+	auto start = std::chrono::high_resolution_clock::now();
 	// Use initieal guess of odometry to register to a map
 	PointCloudT::Ptr currCloudTf(new PointCloudT);
 	static pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 	// pcl::transformPointCloud(*currentCloud,currCloudTf,global_tf);
-
+	// g_lock.lock();
 	icp.setInputSource(currentCloud);
+
+#ifdef USE_OCTOMAP
+	// retrieve from octopmap
+	octomap2pcl(*octmap, *mapCloud);
+#endif
+
+	// registration
 	icp.setInputTarget(mapCloud);
-	icp.setMaxCorrespondenceDistance(0.2);
+	icp.setMaxCorrespondenceDistance(0.25);
 	icp.setMaximumIterations(100);
 	icp.setTransformationEpsilon(1e-8);
+	static pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>::Ptr tf_2d(new pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>);
+	icp.setTransformationEstimation(tf_2d);
 	icp.align(*currCloudTf, global_tf);
-
+	
 	global_tf = icp.getFinalTransformation();
 
-	// Add
+//octomap operations
+#ifdef USE_OCTOMAP
+	octomap::Pointcloud newScan;
+	pcl2octopc(*currCloudTf, newScan);
+	octomap::point3d origin(0, 0, 0); // scan already transfrmed
+	octmap->insertPointCloudRays(newScan, origin);
+	octomap2pcl(*octmap, *mapCloud);
+#else
 	*mapCloud += *currCloudTf;
 	pcl::VoxelGrid<pcl::PointXYZ> voxel;
 	voxel.setInputCloud(mapCloud);
-	voxel.setLeafSize(0.05, 0.05, 0.05);
+	voxel.setLeafSize(voxel_res, voxel_res, voxel_res);
 	voxel.filter(*mapCloud);
+#endif
 
+	auto end = std::chrono::high_resolution_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+	ROS_INFO("Mapping ICP Time: %ld us | Fit Score: %f", elapsed, icp.getFitnessScore());
 	// Publish map
 	sensor_msgs::PointCloud2 mapMsg;
 	pcl::toROSMsg(*mapCloud, mapMsg);
 	mapMsg.header.frame_id = "map";
-	mapMsg.header.stamp = ros::Time::now();
-
+	mapMsg.header.stamp = ros::Time::now();	
 	mapPub.publish(mapMsg);
+	// g_lock.unlock();
 }
 
 void scanCallback(const sensor_msgs::PointCloud2::ConstPtr &msg)
 {
-	ROS_INFO("got cloud");	
-	pcl::fromROSMsg(*msg, *currentCloud);
+	// g_lock.lock();
+ 	pcl::fromROSMsg(*msg, *currentCloud);
 	pcl::PassThrough<pcl::PointXYZ> passthrough;
 	passthrough.setInputCloud(currentCloud);
 	passthrough.setFilterFieldName("x");
-	passthrough.setFilterLimits(0.05,10);
+	passthrough.setFilterLimits(0.05, 10);
 	passthrough.setFilterLimitsNegative(false);
 	passthrough.filter(*currentCloud);
+	// g_lock.unlock();
 }
 
 int main(int argc, char **argv)
@@ -99,10 +147,22 @@ int main(int argc, char **argv)
 
 	// Sampling
 	float Ts;
+	float Ts_map;
 
-	nh_private.param<float>("sampling_time", Ts, 0.1);
+	nh_private.param<float>("odometry_time", Ts, 0.1);
+	nh_private.param<float>("mapping_time", Ts_map, 0.5);
+
 	nh_private.param<float>("corr_dist", corr_dist, 0.1);
 	nh_private.param<float>("voxel_res", voxel_res, 0.1);
+
+	//Octomap
+	octmap = std::make_shared<octomap::OcTree>(voxel_res);
+	octmap->setProbHit(0.92);
+	octmap->setProbMiss(0.2);
+	octmap->setOccupancyThres(0.5);
+	octmap->setClampingThresMin(0.02);
+	octmap->setClampingThresMax(0.98);
+	octmap->setResolution(voxel_res);
 
 	// ROS_WARN("corr dist = %f",corr_dist);
 
@@ -120,7 +180,10 @@ int main(int argc, char **argv)
 
 	tf2_ros::TransformBroadcaster br;
 
-	ros::Timer mappingTimer = nh.createTimer(ros::Duration(0.5), mappingCallback);
+	ros::Timer mappingTimer = nh.createTimer(ros::Duration(Ts_map), mappingCallback);
+	// ros::AsyncSpinner spinner(1);
+	// spinner.start();
+	
 
 	// Odometry Loop
 	while (ros::ok())
@@ -140,6 +203,7 @@ int main(int argc, char **argv)
 		}
 
 		// Filtering
+		// g_lock.lock();
 		auto start = std::chrono::high_resolution_clock::now();
 		static pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
 		sor.setInputCloud(currentCloud);
@@ -151,10 +215,13 @@ int main(int argc, char **argv)
 		voxel.setInputCloud(currentCloud);
 		voxel.setLeafSize(voxel_res, voxel_res, voxel_res);
 		voxel.filter(*currentCloud);
-		auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count();
-		ROS_INFO("Filtering time: %ld", elapsed);
+		auto end = std::chrono::high_resolution_clock::now();
+		auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		ROS_INFO("Filtering time: %ld us", elapsed);
 
 		// Compute Odometry between frames
+		
+		start = std::chrono::high_resolution_clock::now();
 		static pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 		icp.setInputSource(currentCloud);
 		icp.setInputTarget(lastCloud);
@@ -164,7 +231,11 @@ int main(int argc, char **argv)
 		static pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>::Ptr tf_2d(new pcl::registration::TransformationEstimation2D<pcl::PointXYZ, pcl::PointXYZ>);
 		icp.setTransformationEstimation(tf_2d);
 		icp.align(*tfCloud);
-		ROS_INFO("Fit Score: %f", icp.getFitnessScore());
+		end = std::chrono::high_resolution_clock::now();
+		elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		ROS_INFO("ICP Time: %ld us | Fit Score: %f", elapsed, icp.getFitnessScore());
+		
+		
 
 		Eigen::Matrix4f odom_tf = icp.getFinalTransformation();
 
@@ -185,24 +256,25 @@ int main(int argc, char **argv)
 
 		br.sendTransform(tf_stamped);
 
-		pcl::toROSMsg(*currentCloud, laser_msg1);
-		pcl::toROSMsg(*lastCloud, laser_msg2);
-		pcl::toROSMsg(*tfCloud, laser_msg3);
+		// pcl::toROSMsg(*currentCloud, laser_msg1);
+		// pcl::toROSMsg(*lastCloud, laser_msg2);
+		// pcl::toROSMsg(*tfCloud, laser_msg3);
 
-		laser_msg1.header.frame_id = "cloud";
-		laser_msg1.header.stamp = ros::Time::now();
-		laser_msg2.header.frame_id = "cloud";
-		laser_msg2.header.stamp = ros::Time::now();
-		laser_msg3.header.frame_id = "cloud";
-		laser_msg3.header.stamp = ros::Time::now();
+		// laser_msg1.header.frame_id = "cloud";
+		// laser_msg1.header.stamp = ros::Time::now();
+		// laser_msg2.header.frame_id = "cloud";
+		// laser_msg2.header.stamp = ros::Time::now();
+		// laser_msg3.header.frame_id = "cloud";
+		// laser_msg3.header.stamp = ros::Time::now();
 
-		laser_pub1.publish(laser_msg1);
-		laser_pub2.publish(laser_msg2);
-		laser_pub3.publish(laser_msg3);
+		// laser_pub1.publish(laser_msg1);
+		// laser_pub2.publish(laser_msg2);
+		// laser_pub3.publish(laser_msg3);
 
 		*lastCloud = *currentCloud;
 
 		ros::spinOnce();
 		r.sleep();
+		// g_lock.unlock();
 	}
 }
