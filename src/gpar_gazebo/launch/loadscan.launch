@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+
+
+	<include file="$(find gazebo_ros)/launch/empty_world.launch" >
+                <arg name="world_name" value="$(find gpar_gazebo)/worlds/loadscan.world" />
+                <arg name="paused" value="true" />
+        </include>
+        
+        
+  <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+    args="-urdf -model laser -param robot_description"/>
+
+	<param name="robot_description" textfile="$(find gpar_gazebo)/urdf/2dlaser.urdf" />
+	
+	<node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" />
+	
+
+
+
+
+
+</launch>
+
