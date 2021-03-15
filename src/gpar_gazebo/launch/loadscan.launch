@@ -12,11 +12,12 @@
   <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
     args="-urdf -model laser -param robot_description"/>
 
-	<param name="robot_description" textfile="$(find gpar_gazebo)/urdf/2dlaser.urdf" />
+	<param name="robot_description" textfile="$(find gpar_gazebo)/urdf/loadscan.urdf" />
 	
 	<node pkg="robot_state_publisher" type="robot_state_publisher" name="rob_st_pub" />
 	
 
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find gpar_gazebo)/rviz/loadscan.rviz" />
 
 
 
