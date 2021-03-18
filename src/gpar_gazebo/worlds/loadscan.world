@@ -13,7 +13,7 @@
       <include>
        <static>true</static>
         <uri>model://dump_truck</uri>
-        <pose> 0 8 0 0 0 0</pose>
+        <pose> -8 0 0 0 0 1.57</pose>
       </include>
               <plugin name="model_push" filename="libmodel_push.so"/>
     </model>

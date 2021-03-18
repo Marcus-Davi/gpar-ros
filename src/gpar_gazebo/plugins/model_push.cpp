@@ -26,8 +26,8 @@ namespace gazebo
       //this->model->SetLinearVel(ignition::math::Vector3d(.3, 0, 0))
       static ignition::math::Pose3d pose = this->model->WorldPose();
       
-      double y = pose.Y() - 0.0005;
-      pose.SetY(y);
+      double x = pose.X() + 0.0005;
+      pose.SetX(x);
       this->model->SetWorldPose(pose);
       
       

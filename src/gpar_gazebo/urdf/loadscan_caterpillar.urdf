@@ -113,8 +113,8 @@
         </noise>
       </ray>
       <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
-        <topicName>/velocity_scan</topicName>
-        <frameName>velocity_laser</frameName>
+        <topicName>/volume_scan</topicName>
+        <frameName>volume_laser</frameName>
       </plugin>
     </sensor>
   </gazebo>		
@@ -149,8 +149,8 @@
         </noise>
       </ray>
       <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
-        <topicName>/volume_scan</topicName>
-        <frameName>volume_laser</frameName>
+        <topicName>/velocity_scan</topicName>
+        <frameName>velocity_laser</frameName>
       </plugin>
     </sensor>
   </gazebo>			

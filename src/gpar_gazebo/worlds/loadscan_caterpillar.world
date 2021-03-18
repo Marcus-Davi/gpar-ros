@@ -13,7 +13,7 @@
       <include>
        <static>true</static>
         <uri>model://caterpillar</uri>
-        <pose> 0 15 0 0 0 0</pose>
+        <pose> -15 0 0 0 0 1.57</pose>
       </include>
               <plugin name="model_push" filename="libmodel_push.so"/>
     </model>
