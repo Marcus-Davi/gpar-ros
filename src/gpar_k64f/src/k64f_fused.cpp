@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 	ROS_INFO("k64f_frame : %s",frame.c_str());
 	ROS_INFO("k64f_child_frame : %s",child_frame.c_str());
 
-  ros::Subscriber sub = n.subscribe("/mcuserial_node/serial_data", 1000, serial_callback);
+  ros::Subscriber sub = n.subscribe("/mcuserial_node/serial_data", 10, serial_callback);
 
 
 	ros::spin();

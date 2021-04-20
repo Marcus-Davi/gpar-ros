@@ -1,16 +1,20 @@
 <?xml version="1.0"?>
 <launch>
 
-	<!-- This program converts and IMU string from serial port to ros messages -->
+	<arg name="imu_topic" default="/k64f_imu/imu" />
+   <arg name="mag_topic" default="/k64f_imu/mag" />
 
 		<!-- reads serial port of MCU -->
-<node pkg="gpar_mcuserial" type="mcuserial_node" name="mcuserial_node" >
+   <node pkg="gpar_mcuserial" type="mcuserial_node" name="mcuserial_node" >
    <param name="serial_port" type="string" value="/dev/ttyACM0"/>
    </node>
 
 
-	<!-- get output of serial comm and generates IMU msg -->
-   <node pkg="gpar_k64f" type="k64f_imu" name="k64f_imu" output="screen" />
+	<!-- get output of serial comm and generates IMU msgs -->
+   <node pkg="gpar_k64f" type="k64f_imu" name="k64f_imu" output="screen" >
+   <remap from="k64f_imu/imu" to="$(arg imu_topic)" />
+   <remap from="k64f_imu/mag" to="$(arg mag_topic)" />
+   </node>
 
 
 

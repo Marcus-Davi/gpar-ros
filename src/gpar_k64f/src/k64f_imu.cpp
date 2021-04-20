@@ -27,8 +27,9 @@
 
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-#include "geometry_msgs/Vector3.h"
+#include "geometry_msgs/Vector3Stamped.h"
 #include "sensor_msgs/Imu.h"
+#include "sensor_msgs/MagneticField.h"
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf/tf.h>
 
@@ -36,6 +37,7 @@ ros::Publisher pub_a;
 ros::Publisher pub_g;
 ros::Publisher pub_m;
 ros::Publisher pub_imu;
+ros::Publisher pub_mag;
 
 // Vem do datasheet
 #define ACC_CONVERSION (0.488e-3 * 9.80665)
@@ -46,35 +48,59 @@ ros::Publisher pub_imu;
 void serial_callback(const std_msgs::String::ConstPtr& msg){
 
 
-geometry_msgs::Vector3 acc,mag,gyr;
+geometry_msgs::Vector3Stamped acc,mag,gyr;
 sensor_msgs::Imu imu;
+sensor_msgs::MagneticField mag_field;
 
 
 // TODO tem forma melhor ? Serialization ?
 sscanf(msg->data.c_str(),"%lf %lf %lf %lf %lf %lf %lf %lf %lf",
-  &acc.x,&acc.y,&acc.z,
-  &gyr.x,&gyr.y,&gyr.z,
-  &mag.x,&mag.y,&mag.z);
-
+  &acc.vector.x,&acc.vector.y,&acc.vector.z,
+  &gyr.vector.x,&gyr.vector.y,&gyr.vector.z,
+  &mag.vector.x,&mag.vector.y,&mag.vector.z);
 
 
 
 imu.header.stamp = ros::Time::now();
 imu.header.frame_id = "k64f";
 
-imu.angular_velocity.x = gyr.x;
-imu.angular_velocity.y = gyr.y;
-imu.angular_velocity.z = gyr.z;
+imu.angular_velocity.x = gyr.vector.x;
+imu.angular_velocity.y = gyr.vector.y;
+imu.angular_velocity.z = gyr.vector.z;
 
-imu.linear_acceleration.x = acc.x;
-imu.linear_acceleration.y = acc.y;
-imu.linear_acceleration.z = acc.z;
+imu.angular_velocity_covariance[0] = 0.05;
+imu.angular_velocity_covariance[4] = 0.05;
+imu.angular_velocity_covariance[8] = 0.05;
+
+imu.linear_acceleration.x = acc.vector.x;
+imu.linear_acceleration.y = acc.vector.y;
+imu.linear_acceleration.z = acc.vector.z;
+
+imu.linear_acceleration_covariance[0] = 0.05;
+imu.linear_acceleration_covariance[4] = 0.05;
+imu.linear_acceleration_covariance[8] = 0.05;
+
+imu.orientation_covariance[0] = -1;
+
+mag_field.magnetic_field.x = mag.vector.x;
+mag_field.magnetic_field.y = mag.vector.y;
+mag_field.magnetic_field.z = mag.vector.z;
+
+mag_field.magnetic_field_covariance[0] = 0.05;
+mag_field.magnetic_field_covariance[4] = 0.05;
+mag_field.magnetic_field_covariance[8] = 0.05;
+
+mag_field.header.stamp = ros::Time::now();
+acc.header.stamp = ros::Time::now();
+gyr.header.stamp = ros::Time::now();
+mag.header.stamp = ros::Time::now();
+
 
 pub_a.publish(acc);
 pub_g.publish(gyr);
 pub_m.publish(mag);
 pub_imu.publish(imu);
-
+pub_mag.publish(mag_field);
 
 
 }
@@ -105,11 +131,12 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n("~");
 
-  ros::Subscriber sub = n.subscribe("/mcuserial_node/serial_data", 100, serial_callback); //OK!
-  pub_a = n.advertise<geometry_msgs::Vector3>("accelerations",10);
-  pub_g = n.advertise<geometry_msgs::Vector3>("angular_vels",10);
-  pub_m = n.advertise<geometry_msgs::Vector3>("magnetic_field",10);
+  ros::Subscriber sub = n.subscribe("/mcuserial_node/serial_data", 10, serial_callback); //OK!
+  pub_a = n.advertise<geometry_msgs::Vector3Stamped>("accelerations",10);
+  pub_g = n.advertise<geometry_msgs::Vector3Stamped>("angular_vels",10);
+  pub_m = n.advertise<geometry_msgs::Vector3Stamped>("magnetic_field",10);
   pub_imu = n.advertise<sensor_msgs::Imu>("imu",10);
+  pub_mag = n.advertise<sensor_msgs::MagneticField>("mag",10);
 
 	ROS_INFO("k64f_imu init sucess! ");
 	ros::spin();
