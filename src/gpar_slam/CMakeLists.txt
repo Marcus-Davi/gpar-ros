@@ -125,7 +125,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
-  /home/marcus/Workspace/Coding/C++/Cpp-PCL/src #features
+  # /home/marcus/Workspace/Coding/C++/Cpp-PCL/src #features
 )
 
 ## Declare a C++ library
@@ -145,6 +145,7 @@ include_directories(
 
 # application
 add_executable(mLoam src/mLoam.cpp)
+add_executable(mLoam3 src/mLoam3.cpp)
 
 
 
@@ -164,6 +165,12 @@ add_executable(mLoam src/mLoam.cpp)
 # )
 
 target_link_libraries(mLoam
+ ${catkin_LIBRARIES}
+ octomap
+# ${PCL_LIBRARIES}
+)
+
+target_link_libraries(mLoam3
  ${catkin_LIBRARIES}
  octomap
 # ${PCL_LIBRARIES}

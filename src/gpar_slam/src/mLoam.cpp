@@ -21,14 +21,14 @@
 #include <tf2_ros/transform_broadcaster.h>
 
 #include <mutex>
-#include "Features.h"
+// #include "Features.h"
 
 // Octopmap
 #include <octomap/octomap.h>
 #include "octomap_conversions.h"
 
 // Comment here for pure cloud slam
-#define USE_OCTOMAP
+// #define USE_OCTOMAP
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloudT;
 

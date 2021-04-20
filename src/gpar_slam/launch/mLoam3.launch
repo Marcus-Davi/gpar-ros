@@ -4,10 +4,10 @@
 		<param name="use_sim_time" value="true" />
 
 
-		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_slam)/rviz/myslam.rviz" />
+		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find gpar_slam)/rviz/mloam3.rviz" />
 
 
-		<node name="cloudtofile_map" type="cloudtofile" pkg="gpar_lidar" >
+		<!-- <node name="cloudtofile_map" type="cloudtofile" pkg="gpar_lidar" >
 				<remap from="cloud" to="map_cloud" />
 				<param name="reference" type="str" value="map" />
 		</node>
@@ -16,16 +16,19 @@
 		<node name="cloudtofile_scan" type="cloudtofile" pkg="gpar_lidar" >
 				<remap from="cloud" to="cloud" />
 				<param name="reference" type="str" value="cloud" />
-		</node>	
+		</node>	 -->
 
 		<!-- <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" /> -->
 
 
-		<node name="mloadm" pkg="gpar_slam" type="mLoam" output="screen" >
+		<node name="mloam" pkg="gpar_slam" type="mLoam3" output="screen" >
 			<param name="odometry_time" value="0.1" />
 			<param name="mapping_time" value="0.5" />
 			<param name="corr_dist" value="0.15" />
 			<param name="voxel_res" value="0.02" />
+			<param name="init_samples" value="10" />
+			<remap from="cloud" to="livox/lidar" />
+
 			
 			</node>
 
