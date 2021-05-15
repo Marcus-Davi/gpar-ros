@@ -9,8 +9,8 @@ static float mag_field;
 namespace AttitudeEstimation {
 
 
-static void StateJacobian(const VectorXd& Xk,const VectorXd& Uk,void* Res){
-	MatrixKalman* M = static_cast<MatrixKalman*>(Res);
+static void StateJacobian(const Kalman::VectorKalman& Xk,const Kalman::VectorKalman& Uk,void* Res){
+	Kalman::MatrixKalman* M = static_cast<Kalman::MatrixKalman*>(Res);
 
 	(*M)(0,0) = 1.0f;
 	(*M)(0,1) = -Uk[0]*SystemTs/2;
@@ -37,8 +37,8 @@ static void StateJacobian(const VectorXd& Xk,const VectorXd& Uk,void* Res){
 }
 
 
-static void MeasurementJacobian(const VectorXd& Xk,const VectorXd& Uk,void* Res){
-	MatrixKalman* M = static_cast<MatrixKalman*>(Res);
+static void MeasurementJacobian(const Kalman::VectorKalman& Xk,const Kalman::VectorKalman& Uk,void* Res){
+	Kalman::MatrixKalman* M = static_cast<Kalman::MatrixKalman*>(Res);
 
 	float m = mag_field*0.9440f; // B * cos(m_incl)
 	float n = mag_field*0.3298f; // B * sin(m_incl)
@@ -88,8 +88,8 @@ static void MeasurementJacobian(const VectorXd& Xk,const VectorXd& Uk,void* Res)
 
 }
 
-void StateFunction(const VectorXd& Xk,const VectorXd& Uk,void* Res){
-	VectorXd* M = static_cast<VectorXd*>(Res);
+void StateFunction(const Kalman::VectorKalman& Xk,const Kalman::VectorKalman& Uk,void* Res){
+	Kalman::VectorKalman* M = static_cast<Kalman::VectorKalman*>(Res);
 
 	MD::Quaternion qk(Xk[0],Xk[1],Xk[2],Xk[3]);
 	MD::Quaternion qk_w(0,Uk[0],Uk[1],Uk[2]);
@@ -108,8 +108,8 @@ void StateFunction(const VectorXd& Xk,const VectorXd& Uk,void* Res){
 
 }
 
-void MeasurementFunction(const VectorXd& Xk,const VectorXd& Uk,void* Res){
-	VectorXd* M = static_cast<VectorXd*>(Res);
+void MeasurementFunction(const Kalman::VectorKalman& Xk,const Kalman::VectorKalman& Uk,void* Res){
+	Kalman::VectorKalman* M = static_cast<Kalman::VectorKalman*>(Res);
 
 	double m = mag_field*0.9440f; // B * cos(m_incl)
 	double n = mag_field*0.3298f; // B * sin (m_incl)

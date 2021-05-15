@@ -32,13 +32,10 @@ namespace Kalman
 	}
 
 	//ver forma melhor para entradas
-	void EKF::Predict(const double *Input)
+	void EKF::Predict(const VectorKalman &Input)
 	{
 
-		for (unsigned int k = 0; k < n_inputs; ++k)
-		{
-			U(k) = Input[k];
-		}
+		U = Input;
 
 		//std::cout << "U: " <<U << std::endl;
 
@@ -48,13 +45,10 @@ namespace Kalman
 		Pk = Jf * Pk * Jf.transpose() + Qn;
 	}
 
-	void EKF::Update(const double *Measurement)
+	void EKF::Update(const VectorKalman &Measurement)
 	{
 
-		for (unsigned int k = 0; k < n_outputs; ++k)
-		{
-			Y(k) = Measurement[k];
-		}
+		Y = Measurement;
 
 		//std::cout << "M: " << Y << std::endl;
 
@@ -70,10 +64,50 @@ namespace Kalman
 		Pk = (I - Kk * Jh) * Pk;
 	}
 
-	void EKF::GetEstimatedStates(double *states)
+	void EKF::GetEstimatedStates(VectorKalman &states)
 	{
-		for (unsigned int i = 0; i < n_states; ++i)
-			states[i] = Xest[i];
+		states = Xest;
+	}
+
+	// LKF
+
+	LKF::LKF(unsigned int n_states_, unsigned int n_inputs_, unsigned int n_outputs_) : n_states(n_states_), n_inputs(n_inputs_), n_outputs(n_outputs_)
+	{
+		A.resize(n_states, n_states);
+		B.resize(n_states, n_inputs);
+		C.resize(n_outputs, n_states);
+		Qn.resize(n_states, n_states);
+		Rn.resize(n_outputs, n_outputs);
+		Kk.resize(n_states, n_outputs);
+		//	Pk.resize(n_states,n_states);
+
+		Xest.resize(n_states);
+		Yest.resize(n_outputs);
+		U.resize(n_inputs);
+		Y.resize(n_outputs);
+
+		I.setIdentity();
+		Pk.setIdentity();
+	}
+
+	void LKF::Predict(const VectorKalman &inputs)
+	{
+		Xest = A * Xest + B * inputs;
+
+		Pk = A * Pk * A.transpose() + Qn;
+	}
+
+	void LKF::Update(const VectorKalman &measurement)
+	{
+		Yest = C * Xest;
+
+		E = measurement - Yest;
+
+		S = C * Pk * C.transpose() + Rn;
+		Kk = Pk * C.transpose() * S.inverse();
+		Xest = Xest + Kk * E;
+
+		Pk = (I - Kk * C) * Pk;
 	}
 
 }

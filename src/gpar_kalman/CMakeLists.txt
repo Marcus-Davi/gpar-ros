@@ -109,7 +109,7 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES gpar_kalman
+  LIBRARIES KalmanLIB
 #  CATKIN_DEPENDS roscpp std_msgs
 #  DEPENDS system_lib
 )

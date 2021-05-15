@@ -114,10 +114,9 @@ int main(int argc, char **argv)
     Filter.SetMeasurementFunction(AttitudeEstimation::MeasurementFunction);
     Filter.SetMeasurementJacobian(AttitudeEstimation::MeasurementJacobian);
 
-    double input[3];
-    double measurement[6];
+    
 
-    double states[4];
+    Kalman::VectorKalman states(4);
 
     geometry_msgs::Quaternion q;
     geometry_msgs::QuaternionStamped qs;
@@ -126,6 +125,9 @@ int main(int argc, char **argv)
 
     ROS_INFO("Publising rotation ...");
     ROS_INFO("Publishing TF %s -> %s", parent_frame.c_str(), child_frame.c_str());
+
+    Kalman::VectorKalman input(3);
+    Kalman::VectorKalman measurement(6);
 
     while (ros::ok())
     {
@@ -162,6 +164,8 @@ int main(int argc, char **argv)
         //measurement[4] = mag.x;
         //measurement[3] = -mag.y;
         //measurement[5] = mag.z;
+        
+
 
         Filter.Predict(input);
         Filter.Update(measurement);

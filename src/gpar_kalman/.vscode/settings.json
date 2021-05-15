@@ -12,5 +12,16 @@
         "/home/marcus/Workspace/ROS/gpar-slam/devel/lib/python2.7/dist-packages",
         "/opt/ros/melodic/lib/python2.7/dist-packages"
     ],
-    "cmake.configureOnOpen": true
+    "cmake.configureOnOpen": true,
+    "files.associations": {
+        "*.cu": "cuda",
+        "*.tcc": "cpp",
+        "deque": "cpp",
+        "forward_list": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "vector": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp"
+    }
 }
