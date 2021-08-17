@@ -4,3 +4,6 @@
 [submodule "src/gpar_loadscan"]
 	path = src/gpar_loadscan
 	url = git@github.com:Marcus-Davi/gpar_loadscan.git
+[submodule "src/ssl_slam"]
+	path = src/ssl_slam
+	url = https://github.com/wh200720041/ssl_slam.git
