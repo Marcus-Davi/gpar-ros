@@ -7,3 +7,6 @@
 [submodule "src/ssl_slam"]
 	path = src/ssl_slam
 	url = https://github.com/wh200720041/ssl_slam.git
+[submodule "src/sample_nodelet"]
+	path = src/sample_nodelet
+	url = https://github.com/cryborg21/sample_nodelet.git

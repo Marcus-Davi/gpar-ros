@@ -1,0 +1,14 @@
+<library path="lib/libgpar_nodelet_nodelets">
+  <class name="gpar_nodelet/talker" type="gpar_nodelet::talker" base_class_type="nodelet::Nodelet">
+    <description> 
+      Nodelet usage example
+    </description>
+  </class>
+
+    <class name="gpar_nodelet/listener" type="gpar_nodelet::listener" base_class_type="nodelet::Nodelet">
+    <description> 
+      Nodelet usage example
+    </description>
+  </class>
+</library>
+

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+
+    <node pkg="nodelet" type="nodelet" args="manager" name="nodelet_manager" output="screen" />
+
+    <node pkg="nodelet" type="nodelet" args="load gpar_nodelet/talker nodelet_manager" name="talker_nodelet" >
+    <remap from="talker_topic" to="talker" />
+    </node>
+
+     <node pkg="nodelet" type="nodelet" args="load gpar_nodelet/listener nodelet_manager" name="listener_nodelet" >
+     <remap from="talker_topic" to="talker" />
+     </node>
+
+</launch>
